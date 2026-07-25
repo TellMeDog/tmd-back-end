@@ -1,4 +1,4 @@
-name: 버그
+name: 버그 리포트 # 3글자 이상이어야함.
 description: 오류/버그 리포트
 title: "[BUG] "
 labels: ["bug"]
