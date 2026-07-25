@@ -1,0 +1,30 @@
+{
+    "request" : "https://apis.data.go.kr/B551011/KorPetTourService2/detailPetTour2?serviceKey=dbc139d0ec1498172377772e1ca8dac0bdb14e9b68b186ee3d179210977abed5&MobileOS=ETC&MobileApp=test&contentId=2930927&_type=json",
+    "response": {
+        "header": {
+            "resultCode": "0000",
+            "resultMsg": "OK"
+        },
+        "body": {
+            "items": {
+                "item": [
+                    {
+                        "contentid": "2930927",
+                        "relaAcdntRiskMtr": "",
+                        "acmpyTypeCd": "전구역 동반가능",
+                        "relaPosesFclty": "",
+                        "relaFrnshPrdlst": "",
+                        "etcAcmpyInfo": "",
+                        "relaPurcPrdlst": "",
+                        "acmpyPsblCpam": "",
+                        "relaRntlPrdlst": "",
+                        "acmpyNeedMtr": ""
+                    }
+                ]
+            },
+            "numOfRows": 1,
+            "pageNo": 1,
+            "totalCount": 1
+        }
+    }
+}
