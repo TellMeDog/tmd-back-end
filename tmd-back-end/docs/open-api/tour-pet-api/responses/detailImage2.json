@@ -1,0 +1,74 @@
+{
+    "request-url" : "https://apis.data.go.kr/B551011/KorPetTourService2/detailImage2?serviceKey=dbc139d0ec1498172377772e1ca8dac0bdb14e9b68b186ee3d179210977abed5&MobileOS=ETC&MobileApp=test&contentId=2930927&_type=json",
+    "response": {
+        "header": {
+            "resultCode": "0000",
+            "resultMsg": "OK"
+        },
+        "body": {
+            "items": {
+                "item": [
+                    {
+                        "contentid": "2930927",
+                        "originimgurl": "https://tong.visitkorea.or.kr/cms/resource/91/4017191_image2_1.jpg",
+                        "imgname": "1329_가까운약국_2.jpg",
+                        "smallimageurl": "https://tong.visitkorea.or.kr/cms/resource/91/4017191_image2_1.jpg",
+                        "cpyrhtDivCd": "Type3",
+                        "serialnum": "4017191_1"
+                    },
+                    {
+                        "contentid": "2930927",
+                        "originimgurl": "https://tong.visitkorea.or.kr/cms/resource/92/4017192_image2_1.jpg",
+                        "imgname": "1329_가까운약국_3.jpg",
+                        "smallimageurl": "https://tong.visitkorea.or.kr/cms/resource/92/4017192_image2_1.jpg",
+                        "cpyrhtDivCd": "Type3",
+                        "serialnum": "4017192_2"
+                    },
+                    {
+                        "contentid": "2930927",
+                        "originimgurl": "https://tong.visitkorea.or.kr/cms/resource/93/4017193_image2_1.jpg",
+                        "imgname": "1329_가까운약국_4.jpg",
+                        "smallimageurl": "https://tong.visitkorea.or.kr/cms/resource/93/4017193_image2_1.jpg",
+                        "cpyrhtDivCd": "Type3",
+                        "serialnum": "4017193_3"
+                    },
+                    {
+                        "contentid": "2930927",
+                        "originimgurl": "https://tong.visitkorea.or.kr/cms/resource/94/4017194_image2_1.jpg",
+                        "imgname": "1329_가까운약국_5.jpg",
+                        "smallimageurl": "https://tong.visitkorea.or.kr/cms/resource/94/4017194_image2_1.jpg",
+                        "cpyrhtDivCd": "Type3",
+                        "serialnum": "4017194_4"
+                    },
+                    {
+                        "contentid": "2930927",
+                        "originimgurl": "https://tong.visitkorea.or.kr/cms/resource/95/4017195_image2_1.jpg",
+                        "imgname": "1329_가까운약국_6.jpg",
+                        "smallimageurl": "https://tong.visitkorea.or.kr/cms/resource/95/4017195_image2_1.jpg",
+                        "cpyrhtDivCd": "Type3",
+                        "serialnum": "4017195_5"
+                    },
+                    {
+                        "contentid": "2930927",
+                        "originimgurl": "https://tong.visitkorea.or.kr/cms/resource/96/4017196_image2_1.jpg",
+                        "imgname": "1329_가까운약국_7.jpg",
+                        "smallimageurl": "https://tong.visitkorea.or.kr/cms/resource/96/4017196_image2_1.jpg",
+                        "cpyrhtDivCd": "Type3",
+                        "serialnum": "4017196_6"
+                    },
+                    {
+                        "contentid": "2930927",
+                        "originimgurl": "https://tong.visitkorea.or.kr/cms/resource/97/4017197_image2_1.jpg",
+                        "imgname": "1329_가까운약국_8.jpg",
+                        "smallimageurl": "https://tong.visitkorea.or.kr/cms/resource/97/4017197_image2_1.jpg",
+                        "cpyrhtDivCd": "Type3",
+                        "serialnum": "4017197_7"
+                    }
+                ]
+            },
+            "numOfRows": 7,
+            "pageNo": 1,
+            "totalCount": 7
+        }
+    }
+}

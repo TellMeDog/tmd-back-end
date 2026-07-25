@@ -1,0 +1,17 @@
+name: 리팩토링
+description: 코드 개선/리팩토링
+title: "[REFACTOR] "
+labels: ["refactor"]
+body:
+  - type: textarea
+    id: target
+    attributes:
+      label: 대상 코드
+    validations:
+      required: true
+  - type: textarea
+    id: reason
+    attributes:
+      label: 개선 이유
+    validations:
+      required: true

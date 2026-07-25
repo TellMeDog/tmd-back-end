@@ -1,0 +1,29 @@
+name: 기능 개발
+description: 새 기능/API 개발
+title: "[FEAT] "
+labels: ["feature"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: 작업 내용
+    validations:
+      required: true
+  - type: textarea
+    id: api-spec
+    attributes:
+      label: API 명세
+      description: "Method / Endpoint / Request / Response"
+      placeholder: |
+        - Method: POST
+        - Endpoint: /api/v1/...
+        - Request:
+        - Response:
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: 체크리스트
+      options:
+        - label: 구현
+        - label: 테스트 코드
+        - label: Swagger 반영

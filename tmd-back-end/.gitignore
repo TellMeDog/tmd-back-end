@@ -1,0 +1,34 @@
+HELP.md
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# Spring Boot - 민감 정보가 담긴 프로필은 전부 제외
+application-*.yaml
+!application.yaml
+!application-example.yaml
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+# 로그
+*.log
+logs/
+
+# 인증서/키
+*.pem
+*.p12
+*.key
