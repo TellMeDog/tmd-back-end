@@ -31,19 +31,15 @@ public class User {
     // Google의 응답 속 sub 필드, KaKao == id
     private String providerId;
 
-    @Column(nullable = false)
-    private boolean emailVerified;
-
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Builder
-    private User(String email, String password, AuthProvider provider, String providerId, boolean emailVerified) {
+    private User(String email, String password, AuthProvider provider, String providerId) {
         this.email = email;
         this.password = password;
         this.provider = provider;
         this.providerId = providerId;
-        this.emailVerified = emailVerified;
     }
 
     @PrePersist
@@ -57,7 +53,6 @@ public class User {
             .email(email)
             .password(encodedPassword)
             .provider(AuthProvider.LOCAL)
-            .emailVerified(false)
             .build();
     }
 
@@ -67,11 +62,6 @@ public class User {
             .email(email)
             .provider(provider)
             .providerId(providerId)
-            .emailVerified(true) // 이미 검증된 이메일이므로 바로 true
             .build();
-    }
-
-    public void verifyEmail() {
-        this.emailVerified = true;
     }
 }
