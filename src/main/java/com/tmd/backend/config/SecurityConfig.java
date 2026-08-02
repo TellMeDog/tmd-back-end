@@ -25,7 +25,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth ->
                 auth
                     .requestMatchers(HttpMethod.GET, "/auth/login").permitAll()
-                    .requestMatchers(HttpMethod.POST, "/auth/signup").permitAll()
+                    .requestMatchers("/auth/signup", "/auth/send-verification-code", "/auth/verify-email").permitAll()
                     .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .anyRequest().authenticated())
             .csrf(AbstractHttpConfigurer::disable)
