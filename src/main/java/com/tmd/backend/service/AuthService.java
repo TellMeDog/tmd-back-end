@@ -1,12 +1,17 @@
 package com.tmd.backend.service;
 
+import com.tmd.backend.auth.common.JwtToken;
+import com.tmd.backend.auth.provider.JwtTokenProvider;
 import com.tmd.backend.cache.SignUpCache;
 import com.tmd.backend.common.ErrorCode;
 import com.tmd.backend.domain.user.AuthProvider;
 import com.tmd.backend.domain.user.User;
+import com.tmd.backend.dto.request.LoginRequest;
 import com.tmd.backend.dto.request.SignUpRequest;
 import com.tmd.backend.exception.BaseException;
 import com.tmd.backend.repository.UserRepository;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -25,6 +30,7 @@ public class AuthService {
     private final RedisTemplate<String,Object> redisTemplate;
     private final MailService mailService;
     private final PasswordEncoder passwordEncoder;
+    private final JwtTokenProvider jwtTokenProvider;
 
     // 이메일 인증 번호 받기 버튼 클릭
     // 이메일 받은 후 -> 코드 생성 -> Cache 생성 -> Redis에 Key:Value 저장 -> 이메일 발송
@@ -76,5 +82,61 @@ public class AuthService {
         userRepository.save(user);
 
         redisTemplate.delete("signup:" + email);
+    }
+
+    public JwtToken localLogin(LoginRequest loginRequest){
+        String email = loginRequest.getEmail();
+        User user = userRepository.findByEmailAndProvider(email, AuthProvider.LOCAL)
+            .orElseThrow(() -> new BaseException(ErrorCode.LOGIN_FAIL));
+        if(!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())){
+            throw new BaseException(ErrorCode.LOGIN_FAIL);
+        }
+        String accessToken = jwtTokenProvider.createAccessToken(email);
+        String refreshToken = jwtTokenProvider.createRefreshToken(email);
+        redisTemplate.opsForValue().set(
+            "refresh:" + email,
+            refreshToken,
+            Duration.ofMillis(jwtTokenProvider.getRefreshExpiration())
+                );
+
+        log.info("로그인 성공: {}", email);
+        // Controller에서 return된 JwtToken에서
+        // access는 SuccessDto에 담아서 Return
+        // refresh는 setCookie로 httpOnly에 담아줌.
+        return JwtToken.builder()
+            .accessToken(accessToken)
+            .refreshToken(refreshToken)
+            .build();
+    }
+
+    public JwtToken reissue(String refreshToken){
+        if(refreshToken == null){
+            throw new BaseException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+        String email;
+
+        try{
+            email=jwtTokenProvider.getEmail(refreshToken);
+        }catch(ExpiredJwtException e){
+            throw new BaseException(ErrorCode.EXPIRED_REFRESH_TOKEN);
+        }catch (JwtException e){
+            throw new BaseException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+        String savedRefreshToken = (String) redisTemplate.opsForValue().get("refresh:" + email);
+        if(savedRefreshToken == null || !savedRefreshToken.equals(refreshToken)){
+            throw new BaseException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+        String newAccessToken = jwtTokenProvider.createAccessToken(email);
+        String newRefreshToken = jwtTokenProvider.createRefreshToken(email);
+        redisTemplate.opsForValue().set(
+            "refresh:" + email,
+            newRefreshToken,
+            Duration.ofMillis(jwtTokenProvider.getRefreshExpiration())
+        );
+
+        return JwtToken.builder()
+            .accessToken(newAccessToken)
+            .refreshToken(newRefreshToken)
+            .build();
     }
 }
