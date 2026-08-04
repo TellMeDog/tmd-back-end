@@ -91,22 +91,11 @@ public class AuthService {
         if(!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())){
             throw new BaseException(ErrorCode.LOGIN_FAIL);
         }
-        String accessToken = jwtTokenProvider.createAccessToken(email);
-        String refreshToken = jwtTokenProvider.createRefreshToken(email);
-        redisTemplate.opsForValue().set(
-            "refresh:" + email,
-            refreshToken,
-            Duration.ofMillis(jwtTokenProvider.getRefreshExpiration())
-                );
-
         log.info("로그인 성공: {}", email);
         // Controller에서 return된 JwtToken에서
         // access는 SuccessDto에 담아서 Return
         // refresh는 setCookie로 httpOnly에 담아줌.
-        return JwtToken.builder()
-            .accessToken(accessToken)
-            .refreshToken(refreshToken)
-            .build();
+        return issueToken(email);
     }
 
     public JwtToken reissue(String refreshToken){
@@ -137,6 +126,22 @@ public class AuthService {
         return JwtToken.builder()
             .accessToken(newAccessToken)
             .refreshToken(newRefreshToken)
+            .build();
+    }
+
+    public JwtToken issueToken(String email){
+        String accessToken = jwtTokenProvider.createAccessToken(email);
+        String refreshToken = jwtTokenProvider.createRefreshToken(email);
+        redisTemplate.opsForValue().set(
+            "refresh:" + email,
+            refreshToken,
+            Duration.ofMillis(jwtTokenProvider.getRefreshExpiration())
+        );
+        log.info("토큰 발급 : {}", email);
+
+        return JwtToken.builder()
+            .accessToken(accessToken)
+            .refreshToken(refreshToken)
             .build();
     }
 }
