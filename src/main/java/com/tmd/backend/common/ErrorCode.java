@@ -12,6 +12,7 @@ public enum ErrorCode {
     LOGIN_FAIL(HttpStatus.BAD_REQUEST, "이메일 혹은 비밀번호가 일치하지 않습니다."),
     INVALID_TOKEN(HttpStatus.BAD_REQUEST, "잘못된 인증번호입니다."),
     EXPIRED_TOKEN(HttpStatus.BAD_REQUEST, "만료된 인증번호입니다."),
+    INVALID_PROVIDER(HttpStatus.BAD_REQUEST, "잘못된 PROVIDER입니다."),
     PASSWORD_CONFIRM_FAIL(HttpStatus.BAD_REQUEST, "'비밀번호'와 '비밀번호 확인'이 일치하지 않습니다."),
     VALIDATION_ERROR(HttpStatus.BAD_REQUEST, "올바르지 않은 입력입니다."),
     //401
