@@ -2,12 +2,11 @@ package com.tmd.backend.config;
 
 import com.tmd.backend.auth.filter.JwtAuthenticationFilter;
 import com.tmd.backend.auth.handler.JwtAuthenticationEntryPoint;
-import com.tmd.backend.auth.provider.JwtTokenProvider;
-import io.jsonwebtoken.Jwt;
+import com.tmd.backend.auth.oauth2.handler.OAuth2LoginSuccessHandler;
+import com.tmd.backend.auth.oauth2.service.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -28,6 +27,8 @@ import java.util.List;
 public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
 
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
@@ -36,7 +37,8 @@ public class SecurityConfig {
                 auth
                     .requestMatchers("/auth/login",
                         "/auth/signup", "/auth/send-verification-code", "/auth/verify-email","/auth/reissue",
-                        "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        "/swagger-ui/**", "/v3/api-docs/**",
+                        "/oauth2/**", "/login/oauth2/**").permitAll()
                 .anyRequest().authenticated())
             .csrf(AbstractHttpConfigurer::disable)
             .httpBasic(AbstractHttpConfigurer::disable)
@@ -44,6 +46,10 @@ public class SecurityConfig {
             .cors(corsCustomizer -> corsCustomizer.configurationSource(corsConfiguration()))
             .exceptionHandling(e -> e.authenticationEntryPoint(jwtAuthenticationEntryPoint))
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+            .oauth2Login(oauth2 ->
+                oauth2
+                    .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                    .successHandler(oAuth2LoginSuccessHandler))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         return http.build();
