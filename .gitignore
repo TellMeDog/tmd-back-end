@@ -7,8 +7,11 @@ build/
 
 # Spring Boot - 민감 정보가 담긴 프로필은 전부 제외
 application-*.yaml
+application-*.yml
 !application.yaml
+!application.yml
 !application-example.yaml
+!application-example.yml
 .env
 
 # OS
@@ -32,3 +35,6 @@ logs/
 *.pem
 *.p12
 *.key
+
+# Docker 볼륨 데이터
+/data/
