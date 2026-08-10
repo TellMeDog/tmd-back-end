@@ -28,7 +28,7 @@ public class PetController {
                 .name("멍이")
                 .breed("MALTESE")
                 .size("SMALL")
-                .imageUrl("https://cloudflareR2.jpg")
+                .imageUrl("https://placehold.co/400x400")
                 .build());
         return ResponseEntity.ok(SuccessResponseDto.success("반려견 목록을 조회했습니다.", dummy));
     }
