@@ -20,12 +20,4 @@ public class PetRegisterRequest {
     private String size;
 
     private String imageUrl;
-
-    @Builder
-    public PetRegisterRequest(String name, String breed, String size, String imageUrl){
-        this.name=name;
-        this.breed=breed;
-        this.size=size;
-        this.imageUrl=imageUrl;
-    }
 }

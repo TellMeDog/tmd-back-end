@@ -13,13 +13,4 @@ public class PetUpdateRequest {
     private String breed;
     private String size;
     private String imageUrl;
-
-    @Builder
-    public PetUpdateRequest(Long petId, String name, String breed, String size, String imageUrl) {
-        this.petId=petId;
-        this.name = name;
-        this.breed = breed;
-        this.size=size;
-        this.imageUrl=imageUrl;
-    }
 }
