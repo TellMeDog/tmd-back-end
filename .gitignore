@@ -12,6 +12,8 @@ application-*.yml
 !application.yml
 !application-example.yaml
 !application-example.yml
+!application-dev.yaml
+!application-dev.yml
 .env
 
 # OS
