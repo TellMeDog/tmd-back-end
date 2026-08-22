@@ -10,27 +10,37 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+// 유저 - 반려견 목록에 필요한 import 추가
+import com.tmd.backend.service.PetService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 @RestController
 @RequestMapping("/pets")
+@RequiredArgsConstructor  // 클래스 안에 있는 final 필드들을 자동으로 생성자 주입해 주는 Lombok 어노테이션 코드 추가
 public class PetController {
+
+    private final PetService petService; // 반려견 목록 때문에 추가함
+    // PetService를 필드로 선언. @RequiredArgsConstructor가 이 필드를 자동으로 생성자 주입해 줌
+    // 이게 없으면 아래에서 petService.getMyPets()를 쓸 수가 없음
 
     private final AtomicLong SEQUENCE = new AtomicLong(1L);
 
     @GetMapping
-    public ResponseEntity<SuccessResponseDto<List<PetResponse>>> getPetsList(){
-        List<PetResponse> dummy = List.of(
-            PetResponse.builder()
-                .petId(1L)
-                .name("멍이")
-                .breed("MALTESE")
-                .size("SMALL")
-                .imageUrl("https://placehold.co/400x400")
-                .build());
-        return ResponseEntity.ok(SuccessResponseDto.success("반려견 목록을 조회했습니다.", dummy));
+    // 반려견 목록에 쓰일 코드로 아래 수정 (더미데이터였음)
+    public ResponseEntity<SuccessResponseDto<List<PetResponse>>> getPetsList(
+        @AuthenticationPrincipal String email) {
+        // JWT 토큰에서 꺼낸 로그인한 사람의 email이 자동으로 여기 들어옴
+
+        List<PetResponse> pets = petService.getMyPets(email);
+        // 더미 데이터 대신, 실제로 DB에서 이 사람의 반려견 목록을 조회함
+
+        return ResponseEntity.ok(SuccessResponseDto.success("반려견 목록을 조회했습니다.", pets));
+        // dummy 대신 pets를 리턴하도록 변수명만 바꿈
     }
 
     @PostMapping
