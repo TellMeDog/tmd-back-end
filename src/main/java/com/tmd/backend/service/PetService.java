@@ -14,6 +14,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.tmd.backend.dto.request.pet.PetRegisterRequest;  // 반려견 - 반려견 추가 코드를 위해 추가
+
 import java.util.List;
 
 @Slf4j  // 로그(log.info 등) 찍을 수 있게 해줌
@@ -43,18 +45,53 @@ public class PetService {
         // 방금 찾은 User의 id로, 그 사람이 등록한 반려견들을 전부 조회
         // 결과는 Pet 여러 마리 (List)
 
-        return pets.stream()
-            // Pet 리스트를 하나씩 처리할 수 있는 흐름으로 바꿈
-
+        return pets.stream()  // Pet 리스트를 하나씩 처리할 수 있는 흐름으로 바꿈
             .map(pet -> PetResponse.builder()
                 .petId(pet.getId())
                 .name(pet.getName())
-                .breed(pet.getBreed())
-                .size(pet.getSize())
+                .breed(pet.getBreed().name())  // ← .name() 추가: Enum 값을 문자열로 바꿔주는 기능
+                .size(pet.getSize().name())  // ← .name() 추가: Enum 값을 문자열로 바꿔주는 기능
                 .imageUrl(pet.getImageUrl())
                 .build())
             // Pet(원본, DB 그대로의 형태) 하나하나를 PetResponse(응답용, 프론트에 보여줄 형태)로 변환
 
             .toList();  // 변환된 PetResponse들을 다시 리스트로 모아서 리턴
+    }
+
+    // 반려견 - 반려견 추가를 위해 아래 메서드 추가
+    // 아래 메서드는 쓰기(등록) 작업이라, 클래스 기본값(readOnly=true)을 무시하고 이 메서드에만 별도로 쓰기 가능한 트랜잭션을 적용함
+    @Transactional
+
+    // email(로그인한 사람)과 requests(등록하려는 반려견 정보 리스트)를 받아서 등록 완료된 반려견들의 정보(PetResponse 리스트)를 리턴하는 메서드
+    public List<PetResponse> registerPets(String email, List<PetRegisterRequest> requests) {
+        User user = userRepository.findByEmail(email) // email로 User를 찾음. 이 반려견들의 주인을 알아내기 위함
+            .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+
+        List<Pet> pets = requests.stream() // 등록 요청 리스트(requests)를 하나씩 처리할 준비
+            .map(req -> Pet.builder()  // Pet.java에서 이미 Breed 타입을 받도록 고쳤음
+                .user(user) // 방금 찾은 user를 이 반려견의 주인으로 연결
+                .name(req.getName())  // 요청에서 받은 이름을 그대로 사용
+                .breed(req.getBreed()) // 요청에서 받은 품종을 그대로 사용  // req.getBreed()는 이제 PetRegisterRequest에서 이미 Breed(Enum)로 받고 있음
+                .size(req.getSize()) // 요청에서 받은 크기를 그대로 사용
+                .imageUrl(req.getImageUrl()) // 요청에서 받은 이미지 URL (없으면 null, 필수 아님)
+                .build()) // 위 값들로 Pet 객체 하나를 완성 (아직 DB엔 저장 안 된 상태, 메모리 상에서만 만들어진 상태)
+            .toList(); // req(요청) 하나하나를 Pet 객체로 바꾼 결과들을 리스트로 모음
+
+        List<Pet> savedPets = petRepository.saveAll(pets);
+        // 방금 만든 Pet 리스트를 DB에 한번에 저장
+        // saveAll은 JpaRepository가 기본으로 제공하는 메서드 (직접 안 만들어도 있음)
+        // 저장이 끝나면, 각 Pet에 DB가 자동으로 매긴 id 값이 채워져서 돌아옴
+        // (저장 전엔 id가 비어있었는데, 저장 후엔 실제 번호가 생김)
+
+        return savedPets.stream() // 방금 저장된(id가 채워진) Pet들을 다시 하나씩 처리
+            .map(pet -> PetResponse.builder()
+                .petId(pet.getId()) // DB가 방금 매겨준 진짜 id 값
+                .name(pet.getName())
+                .breed(pet.getBreed().name())  // ← .name() 추가
+                .size(pet.getSize().name())  // ← .name() 추가
+                .imageUrl(pet.getImageUrl())
+                .build()) // 저장된 Pet(원본 Entity)을 PetResponse(응답용 DTO)로 변환
+
+            .toList(); // 변환된 것들을 다시 리스트로 모아서 최종 리턴
     }
 }

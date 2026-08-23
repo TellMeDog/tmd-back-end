@@ -30,8 +30,8 @@ public class PetController {
 
     private final AtomicLong SEQUENCE = new AtomicLong(1L);
 
-    @GetMapping
     // 반려견 목록에 쓰일 코드로 아래 수정 (더미데이터였음)
+    @GetMapping
     public ResponseEntity<SuccessResponseDto<List<PetResponse>>> getPetsList(
         @AuthenticationPrincipal String email) {
         // JWT 토큰에서 꺼낸 로그인한 사람의 email이 자동으로 여기 들어옴
@@ -43,18 +43,15 @@ public class PetController {
         // dummy 대신 pets를 리턴하도록 변수명만 바꿈
     }
 
+    // 반려견 추가에 쓰일 코드로 아래 수정
     @PostMapping
-    public ResponseEntity<SuccessResponseDto<List<PetResponse>>> registerPets(@Valid @RequestBody List<PetRegisterRequest> requests){
+    public ResponseEntity<SuccessResponseDto<List<PetResponse>>> registerPets(
 
-        List<PetResponse> responses = requests.stream()
-            .map(req -> PetResponse.builder()
-                .petId(SEQUENCE.getAndIncrement())
-                .name(req.getName())
-                .breed(req.getBreed())
-                .size(req.getSize())
-                .imageUrl(req.getImageUrl())
-                .build())
-            .toList();
+        @AuthenticationPrincipal String email, // 지금 로그인한 사람의 이메일을 자동으로 이 email 변수에 넣어달라는 코드 추가
+        @Valid @RequestBody List<PetRegisterRequest> requests){
+
+        List<PetResponse> responses = petService.registerPets(email, requests);
+        // 더미로 SEQUENCE 번호 매기던 로직 대신 Service에게 email과 요청 리스트를 넘겨서 진짜로 DB에 저장시킴
 
         return ResponseEntity.ok(SuccessResponseDto.success("반려견 정보가 등록되었습니다.", responses));
     }
@@ -66,8 +63,8 @@ public class PetController {
         PetResponse response = PetResponse.builder()
             .petId(petId)
             .name(request.getName() != null ? request.getName() : "초코")
-            .breed(request.getBreed() != null ? request.getBreed() : "MALTESE")
-            .size(request.getSize() != null ? request.getSize() : "SMALL")
+            .breed(request.getBreed() != null ? request.getBreed().name() : "MALTESE")  // ← .name() 추가
+            .size(request.getSize() != null ? request.getSize().name() : "SMALL")  // ← .name() 추가
             .imageUrl(request.getImageUrl() != null ? request.getImageUrl() : "https://placehold.co/400x400")
             .build();
 

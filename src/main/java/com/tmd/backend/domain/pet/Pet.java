@@ -36,11 +36,13 @@ public class Pet {
     @Column(nullable = false, length = 50)
     private String name;
 
+    // 강아지 종/사이즈는 enum으로 받기
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
-    private String breed;
-
+    private Breed breed;
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private String size;
+    private PetSize size;
 
     @Column(name = "image_url", length = 500)
     private String imageUrl;
@@ -51,7 +53,7 @@ public class Pet {
     // 아래 생성자를 빌더 패턴으로도 쓸 수 있게 해줌
     // 예: Pet.builder().user(user).name("초코")....build()
 
-    private Pet(User user, String name, String breed, String size, String imageUrl) {
+    private Pet(User user, String name, Breed breed, PetSize size, String imageUrl) {  // 생성자 enum에 맞게 수정
         this.user = user;
         this.name = name;
         this.breed = breed;
