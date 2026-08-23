@@ -1,3 +1,7 @@
+// 프론트에서 오는 반려견 관련 요청(조회/등록/수정/삭제 등)을 받아서 실제 처리는 PetService에게 시키고, 그 결과를 정해진 응답 형식으로 포장해서 돌려주는 파일
+// GET /pets, POST /pets, PATCH /pets/{petId}, DELETE /pets/{petId} 등의 API 입구 역할을 담당
+
+
 package com.tmd.backend.controller;
 
 
@@ -57,23 +61,24 @@ public class PetController {
     }
 
     @PatchMapping("/{petId}")
-    public ResponseEntity<SuccessResponseDto<PetResponse>> updatePet(@PathVariable Long petId,
-                                                                     @RequestBody PetUpdateRequest request){
+    public ResponseEntity<SuccessResponseDto<PetResponse>> updatePet(
+        @AuthenticationPrincipal String email,  // 반려견 수정 기능 - 소유권 검증을 위해 누가 요청했는지 알아야 함
+        @PathVariable Long petId,
+        @RequestBody PetUpdateRequest request){
 
-        PetResponse response = PetResponse.builder()
-            .petId(petId)
-            .name(request.getName() != null ? request.getName() : "초코")
-            .breed(request.getBreed() != null ? request.getBreed().name() : "MALTESE")  // ← .name() 추가
-            .size(request.getSize() != null ? request.getSize().name() : "SMALL")  // ← .name() 추가
-            .imageUrl(request.getImageUrl() != null ? request.getImageUrl() : "https://placehold.co/400x400")
-            .build();
+        PetResponse response = petService.updatePet(email, petId, request);  // 더미 데이터 대신 반려견 수정 기능에 맞게 교체
 
         return ResponseEntity.ok(SuccessResponseDto.success("반려견 정보가 수정되었습니다.", response));
     }
 
 
+    // 반려견 삭제에 쓰일 코드로 아래 수정
     @DeleteMapping("/{petId}")
-    public ResponseEntity<SuccessResponseDto<Void>> deletePet(@PathVariable Long petId){
+    public ResponseEntity<SuccessResponseDto<Void>> deletePet(
+        @AuthenticationPrincipal String email,  // 소유권 검증을 위해 필요
+        @PathVariable Long petId){
+        petService.deletePet(email, petId);  // 실제 삭제 로직 호출
+
         return ResponseEntity.ok(SuccessResponseDto.successWithoutData("반려견 정보가 삭제되었습니다."));
     }
 }

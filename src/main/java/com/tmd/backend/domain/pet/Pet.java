@@ -1,3 +1,7 @@
+// Pet Entity 파일: 반려견 한 마리의 정보를 DB와 연결해서, 안전하게 만들고 읽고 수정 등등 할 수 있게 해주는 설계도 파일
+// 이 파일이 반려견 데이터를 다루는 모든 기능의 중심 역할 함
+
+
 package com.tmd.backend.domain.pet;
 
 import com.tmd.backend.domain.user.User; // User Entity를 가져옴 (Pet이 User를 참조해야 하므로 필요)
@@ -60,5 +64,19 @@ public class Pet {
         this.size = size;
         this.imageUrl = imageUrl;
         // 매개변수로 받은 값들을 실제 필드에 저장
+    }
+
+    // 반려견 수정(update) 메서드 추가
+    public void update(String name, Breed breed, PetSize size, String imageUrl) {
+        // "이 반려견의 정보를 바꿔달라"는 요청을 받는 메서드
+        // 매개변수로 새 값들을 받음 (일부는 null일 수 있음)
+
+        if (name != null) this.name = name;
+        // name이 null이 아니면(=바꾸고 싶은 값을 보냈으면) 이 Pet 객체의 name을 새 값으로 바꿈
+        // null이면 (안 보냈으면) 아무것도 안 하고 기존 값 그대로 둠
+        // 아래 3개도 똑같은 방식
+        if (breed != null) this.breed = breed;
+        if (size != null) this.size = size;
+        if (imageUrl != null) this.imageUrl = imageUrl;
     }
 }

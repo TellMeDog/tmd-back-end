@@ -1,3 +1,5 @@
+// User Entity 파일
+
 package com.tmd.backend.domain.user;
 
 import jakarta.persistence.*;

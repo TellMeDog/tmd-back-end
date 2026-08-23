@@ -14,7 +14,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.tmd.backend.dto.request.pet.PetRegisterRequest;  // 반려견 - 반려견 추가 코드를 위해 추가
+import com.tmd.backend.dto.request.pet.PetRegisterRequest;  // 반려견 추가 코드를 위해 추가
+import com.tmd.backend.dto.request.pet.PetUpdateRequest;   // 반려견 수정 코드를 위해 추가
 
 import java.util.List;
 
@@ -93,5 +94,56 @@ public class PetService {
                 .build()) // 저장된 Pet(원본 Entity)을 PetResponse(응답용 DTO)로 변환
 
             .toList(); // 변환된 것들을 다시 리스트로 모아서 최종 리턴
+    }
+
+
+    // 반려견 - 반려견 수정을 위해 아래 메서드 추가
+    // 아래 메서드는 쓰기(수정) 작업이라 클래스 기본값(readOnly=true) 대신 별도 적용
+    @Transactional
+
+    public PetResponse updatePet(String email, Long petId, PetUpdateRequest request) {
+        // 로그인한 사람 email, 수정할 반려견 id(petId), 새 값들(request)을 받음
+
+        User user = userRepository.findByEmail(email)  // 요청 보낸 사람이 누군지 찾음 (소유권 확인에 필요)
+            .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+
+        Pet pet = petRepository.findById(petId)  // petId로 수정할 반려견을 찾음, 없으면 PET_NOT_FOUND
+            .orElseThrow(() -> new BaseException(ErrorCode.PET_NOT_FOUND));
+
+        if (!pet.getUser().getId().equals(user.getId())) {   // 이 반려견의 주인과 지금 요청 보낸 사람이 다르면 FORBIDDEN 에러
+            throw new BaseException(ErrorCode.FORBIDDEN);
+        }
+
+        pet.update(  // 검증 통과했으면 Pet.java에 만든 update() 메서드로 실제 값 변경 (null인 필드는 기존 값 유지됨)
+            request.getName(),
+            request.getBreed(),
+            request.getSize(),
+            request.getImageUrl()
+        );
+
+        return PetResponse.builder()
+            .petId(pet.getId())
+            .name(pet.getName())
+            .breed(pet.getBreed().name())
+            .size(pet.getSize().name())
+            .imageUrl(pet.getImageUrl())
+            .build();
+        // 수정된 최신 정보를 응답 형태로 만들어서 리턴
+    }
+
+    // 반려견 - 반려견 삭제를 위해 아래 메서드 추가
+    @Transactional
+    public void deletePet(String email, Long petId) {
+        User user = userRepository.findByEmail(email)  // email로 User 조회 (요청자가 누구인지)
+            .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+
+        Pet pet = petRepository.findById(petId)  // petId로 삭제할 Pet 조회 (없으면 PET_NOT_FOUND)
+            .orElseThrow(() -> new BaseException(ErrorCode.PET_NOT_FOUND));
+
+        if (!pet.getUser().getId().equals(user.getId())) {  // 이 반려견의 진짜 주인과 요청자가 같은지 확인
+            throw new BaseException(ErrorCode.FORBIDDEN);
+        }
+
+        petRepository.delete(pet);  // 실제 삭제
     }
 }
