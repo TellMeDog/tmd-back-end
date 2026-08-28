@@ -10,13 +10,15 @@ import java.util.List;
 
 @RequiredArgsConstructor
 public class PlaceRepositoryImpl implements PlaceRepositoryCustom{
+
     private final JPAQueryFactory jpaQueryFactory;
 
-    QPlace place = QPlace.place; // 1. private final 2. static 고려
+    private static final QPlace place = QPlace.place;
 
     @Override
     public List<Place> findPlacesWithCategory(double swLat, double swLng, double neLat, double neLng,
                                               String lclsSystm1, String lclsSystm2, String lclsSystm3) {
+
         return jpaQueryFactory
             .selectFrom(place)
             .where(
@@ -26,6 +28,39 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom{
                 lclsSystm2Eq(lclsSystm2),
                 lclsSystm3Eq(lclsSystm3))
             .fetch();
+    }
+
+    @Override
+    public List<Place> findPlacesWithKeyword(String keyword) {
+        return jpaQueryFactory
+            .selectFrom(place)
+            .where(
+                place.addr1.contains(keyword).or(place.addr2.contains(keyword)) .or(place.title.contains(keyword))
+            )
+            .fetch();
+    }
+
+    @Override
+    public List<Place> findPlacesByRegion(String lDongRegnCd, String lDongSignguCd){
+        return jpaQueryFactory
+            .selectFrom(place)
+            .where(
+                lDongRegnCdEq(lDongRegnCd),
+                lDongSignguCdEq(lDongSignguCd)
+            )
+            .fetch();
+    }
+
+    private BooleanExpression lDongRegnCdEq(String lDongRegnCd){
+        return lDongRegnCd == null
+            ? null
+            : place.lDongRegnCd.eq(lDongRegnCd);
+    }
+
+    private BooleanExpression lDongSignguCdEq(String lDongSignguCd){
+        return lDongSignguCd == null
+            ? null
+            : place.lDongSignguCd.eq(lDongSignguCd);
     }
 
     private BooleanExpression lclsSystm1Eq(String lclsSystm1){
