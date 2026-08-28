@@ -19,7 +19,6 @@ public class PlacePetInfo {
     @JoinColumn(name = "place_id")
     private Place place;
 
-
     private String acmpyTypeCd; // 동반유형코드(동반구분) ex. 전구역 동반가능
     private String acmpyPsblCpam; // 동반가능동물 ex. 전 견종 출입 가능 (맹견의 경우, 입마개 착용 필수)
     private String acmpyNeedMtr; // 동반시 필요사항 ex. 목줄 착용
