@@ -15,10 +15,13 @@ public class Pet {
     private Long id;
 
     private String name;
+
     @Enumerated(value = EnumType.STRING)
     private PetBreed breed;
+
     @Enumerated(value = EnumType.STRING)
     private PetSize size;
+
     private String imageUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)
