@@ -1,0 +1,11 @@
+package com.tmd.backend.ai;
+
+public enum PolicyCondition {
+    LEASH_REQUIRED,
+    CARRIER_REQUIRED,
+    MUZZLE_REQUIRED,
+    VACCINATION_REQUIRED,
+    PRE_INQUIRY_REQUIRED,
+    AGGRESSIVE_BREED_RESTRICTED,
+    OTHER
+}
