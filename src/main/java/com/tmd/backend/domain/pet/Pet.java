@@ -1,82 +1,49 @@
-// Pet Entity 파일: 반려견 한 마리의 정보를 DB와 연결해서, 안전하게 만들고 읽고 수정 등등 할 수 있게 해주는 설계도 파일
-// 이 파일이 반려견 데이터를 다루는 모든 기능의 중심 역할 함
-
-
 package com.tmd.backend.domain.pet;
 
-import com.tmd.backend.domain.user.User; // User Entity를 가져옴 (Pet이 User를 참조해야 하므로 필요)
+import com.tmd.backend.domain.user.User;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
-
-@Entity // 이 클래스는 DB 테이블과 매핑되는 Entity다 라는 뜻
-@Table(name = "pet") // 매핑될 실제 테이블 이름을 지정. pet 테이블과 연결됨
-@Getter // 모든 필드에 대해 자동으로 getter 메서드 생성
+@Entity
+@Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-// 매개변수 없는 빈 생성자를 자동 생성하되, 외부에서 함부로 못 쓰게 PROTECTED로 제한
-
 public class Pet {
-
-    @Id
-    // 이 필드가 테이블의 기본키(Primary Key)임을 표시
-
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    // id 값을 DB가 자동으로 1씩 증가시켜서 채워줌 (auto increment)
-
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    // Pet의 고유 번호
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    // 여러 개의 Pet이 한 명의 User에 속한다는 관계를 표현
-    // LAZY: User 정보는 실제로 필요할 때만 조회 (성능 최적화)
-
-    @JoinColumn(name = "user_id", nullable = false)
-    // 실제 DB에서는 이 관계가 "user_id"라는 컬럼으로 저장됨
-    // nullable = false: 반드시 주인(User)이 있어야 함 (주인 없는 반려견 불가)
-
-    private User user;
-    // 이 반려견의 주인 (User 객체 자체를 참조)
-
-    @Column(nullable = false, length = 50)
     private String name;
 
-    // 강아지 종/사이즈는 enum으로 받기
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 50)
-    private Breed breed;
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Enumerated(value = EnumType.STRING)
+    private PetBreed breed;
+
+    @Enumerated(value = EnumType.STRING)
     private PetSize size;
 
-    @Column(name = "image_url", length = 500)
     private String imageUrl;
-    // 프로필 사진 URL, DB 컬럼명은 image_url(스네이크케이스)로 매핑
-    // 자바 필드명은 imageUrl(카멜케이스) - JPA가 자동으로 변환해줌
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="user_id")
+    private User user;
 
     @Builder
-    // 아래 생성자를 빌더 패턴으로도 쓸 수 있게 해줌
-    // 예: Pet.builder().user(user).name("초코")....build()
-
-    private Pet(User user, String name, Breed breed, PetSize size, String imageUrl) {  // 생성자 enum에 맞게 수정
+    public Pet(User user, String name, PetBreed breed, PetSize size, String imageUrl) {
         this.user = user;
         this.name = name;
         this.breed = breed;
         this.size = size;
         this.imageUrl = imageUrl;
-        // 매개변수로 받은 값들을 실제 필드에 저장
     }
 
-    // 반려견 수정(update) 메서드 추가
-    public void update(String name, Breed breed, PetSize size, String imageUrl) {
-        // "이 반려견의 정보를 바꿔달라"는 요청을 받는 메서드
-        // 매개변수로 새 값들을 받음 (일부는 null일 수 있음)
-
-        if (name != null) this.name = name;
-        // name이 null이 아니면(=바꾸고 싶은 값을 보냈으면) 이 Pet 객체의 name을 새 값으로 바꿈
-        // null이면 (안 보냈으면) 아무것도 안 하고 기존 값 그대로 둠
-        // 아래 3개도 똑같은 방식
-        if (breed != null) this.breed = breed;
-        if (size != null) this.size = size;
-        if (imageUrl != null) this.imageUrl = imageUrl;
+    public static Pet create(User user, String name, PetBreed breed, PetSize size, String imageUrl) {
+        return Pet.builder()
+            .user(user)
+            .name(name)
+            .breed(breed)
+            .size(size)
+            .imageUrl(imageUrl)
+            .build();
     }
 }

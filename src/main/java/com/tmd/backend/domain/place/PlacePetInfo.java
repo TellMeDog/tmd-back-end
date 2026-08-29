@@ -1,8 +1,9 @@
 package com.tmd.backend.domain.place;
 
-// import 추가함
+import com.tmd.backend.external.TourApiPetInfoItem;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -11,8 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PlacePetInfo {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @OneToOne
@@ -28,4 +28,45 @@ public class PlacePetInfo {
     private String relaPurcPrdlst; // 관련 구매 품목
     private String relaRntlPrdlst; // 관련 렌탈 품목
     private String etcAcmpyInfo; // 기타 동반 정보 ex. 안전을 위해 목줄은 2m 이내로 유지, 별도의 쓰레기 처리 시설이 없으므로 배변봉투 지참 및 수거 필수
+
+    @Builder
+    private PlacePetInfo(Place place, String acmpyTypeCd, String acmpyPsblCpam, String acmpyNeedMtr, String relaAcdntRiskMtr, String relaPosesFclty, String relaFrnshPrdlst, String relaPurcPrdlst, String relaRntlPrdlst, String etcAcmpyInfo) {
+        this.place = place;
+        this.acmpyTypeCd = acmpyTypeCd;
+        this.acmpyPsblCpam = acmpyPsblCpam;
+        this.acmpyNeedMtr = acmpyNeedMtr;
+        this.relaAcdntRiskMtr = relaAcdntRiskMtr;
+        this.relaPosesFclty = relaPosesFclty;
+        this.relaFrnshPrdlst = relaFrnshPrdlst;
+        this.relaPurcPrdlst = relaPurcPrdlst;
+        this.relaRntlPrdlst = relaRntlPrdlst;
+        this.etcAcmpyInfo = etcAcmpyInfo;
+    }
+
+    // 원본 응답 DTO -> PlacePetInfo로 가공
+    public static PlacePetInfo from(Place place, TourApiPetInfoItem item){
+        return PlacePetInfo.builder()
+            .place(place)
+            .acmpyTypeCd(item.getAcmpyTypeCd())
+            .acmpyPsblCpam(item.getAcmpyPsblCpam())
+            .acmpyNeedMtr(item.getAcmpyNeedMtr())
+            .relaAcdntRiskMtr(item.getRelaAcdntRiskMtr())
+            .relaPosesFclty(item.getRelaPosesFclty())
+            .relaFrnshPrdlst(item.getRelaFrnshPrdlst())
+            .relaPurcPrdlst(item.getRelaPurcPrdlst())
+            .relaRntlPrdlst(item.getRelaRntlPrdlst())
+            .etcAcmpyInfo(item.getEtcAcmpyInfo())
+            .build();
+    }
+
+    // 마커색/체크리스트 계산 시 쓸, 4개 필드를 합친 텍스트
+    // 근데 필드가 null로 올시 GREEN으로 볼지, YELLOW로 볼지 논의 필요
+    public String combinedText() {
+        return String.join(" ",
+            nullToEmpty(acmpyTypeCd), nullToEmpty(acmpyPsblCpam), nullToEmpty(acmpyNeedMtr), nullToEmpty(etcAcmpyInfo));
+    }
+
+    private String nullToEmpty(String s){
+        return s == null ? "" : s;
+    }
 }

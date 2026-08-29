@@ -35,11 +35,19 @@ spring:
             scope:
               - email
               - profile
-
+  ai:
+    google:
+      genai:
+        api-key: ${GEMINI_API_KEY}
+        chat:
+          model: gemini-3.6-flash
 jwt:
   secret-key: ${JWT_SECRET}
   access-expiration: ${JWT_ACCESS_EXPIRATION}
   refresh-expiration: ${JWT_REFRESH_EXPIRATION}
+
+tourapi:
+  service-key: ${TOUR_API_SERVICE_KEY}
 
 oauth2:
   redirect-uri: ${OAUTH2_REDIRECT_URI}

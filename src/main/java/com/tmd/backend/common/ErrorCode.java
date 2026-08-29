@@ -18,6 +18,8 @@ public enum ErrorCode {
     INVALID_SEARCH_REQUEST(HttpStatus.BAD_REQUEST, "keyword와 category는 동시에 사용할 수 없습니다."),
     INVALID_CATEGORY(HttpStatus.BAD_REQUEST, "지원하지 않는 카테고리입니다."),
     INVALID_REVIEW_REQUEST(HttpStatus.BAD_REQUEST, "안내된 조건과 달랐어요를 선택한 경우에만 상세 사유를 입력할 수 있습니다."),
+    INVALID_MAP_BOUNDS(HttpStatus.BAD_REQUEST, "범위를 초과한 반경입니다."),
+    UNKNOWN_REGION(HttpStatus.BAD_REQUEST, "등록되지 않은 지역입니다."),
 
     //401
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "로그인이 필요한 서비스입니다."),
@@ -25,6 +27,7 @@ public enum ErrorCode {
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 요청입니다."),
     //403
     NOT_VERIFIED_EMAIL(HttpStatus.FORBIDDEN, "이메일 인증이 필요합니다."),
+    NOT_OWNER_OF_DOG(HttpStatus.FORBIDDEN, "등록된 반려견이 아닙니다."),
     /*
     - 즐겨찾기 삭제 시 본인 소유 아닌 경우
     - Pet 수정 시 본인 소유 아닌 경우
