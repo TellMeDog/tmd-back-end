@@ -46,6 +46,9 @@ jwt:
   access-expiration: ${JWT_ACCESS_EXPIRATION}
   refresh-expiration: ${JWT_REFRESH_EXPIRATION}
 
+tourapi:
+  service-key: ${TOUR_API_SERVICE_KEY}
+
 oauth2:
   redirect-uri: ${OAUTH2_REDIRECT_URI}
 
