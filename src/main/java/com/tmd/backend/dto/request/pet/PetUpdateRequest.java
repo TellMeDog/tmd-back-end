@@ -6,7 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 // 강아지 사이즈/종 enum 쓰려고 import 추가
-import com.tmd.backend.domain.pet.Breed;
+import com.tmd.backend.domain.pet.PetBreed;
 import com.tmd.backend.domain.pet.PetSize;
 
 @Getter
@@ -14,7 +14,7 @@ import com.tmd.backend.domain.pet.PetSize;
 public class PetUpdateRequest {
     private Long petId;
     private String name;
-    private Breed breed; // enum
+    private PetBreed breed; // enum
     private PetSize size; // enum
     private String imageUrl;
 }

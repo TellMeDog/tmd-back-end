@@ -42,7 +42,8 @@ public class PetService {
             .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
         // email로 User를 찾음. 없으면 USER_NOT_FOUND 에러 던짐 (Pet은 userId로 찾아야 하는데, 우리가 가진 건 email뿐이라 User부터 찾아서 그 안의 id를 꺼내 쓰기 위함)
 
-        List<Pet> pets = petRepository.findAllByUserId(user.getId());
+        List<Pet> pets = petRepository.findByUserId(user.getId());
+        // 수정: findAllByUserId → findByUserId (병합된 Repository 메서드명에 맞춤)
         // 방금 찾은 User의 id로, 그 사람이 등록한 반려견들을 전부 조회
         // 결과는 Pet 여러 마리 (List)
 
@@ -107,7 +108,8 @@ public class PetService {
         User user = userRepository.findByEmail(email)  // 요청 보낸 사람이 누군지 찾음 (소유권 확인에 필요)
             .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
 
-        Pet pet = petRepository.findById(petId)  // petId로 수정할 반려견을 찾음, 없으면 PET_NOT_FOUND
+        Pet pet = petRepository.findById(petId)
+            // petId로 수정할 반려견을 찾음, 없으면 PET_NOT_FOUND
             .orElseThrow(() -> new BaseException(ErrorCode.PET_NOT_FOUND));
 
         if (!pet.getUser().getId().equals(user.getId())) {   // 이 반려견의 주인과 지금 요청 보낸 사람이 다르면 FORBIDDEN 에러

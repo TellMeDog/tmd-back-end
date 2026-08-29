@@ -7,7 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 // enum 쓰려고 import 추가
-import com.tmd.backend.domain.pet.Breed;
+import com.tmd.backend.domain.pet.PetBreed;
 import com.tmd.backend.domain.pet.PetSize;
 import jakarta.validation.constraints.NotNull;
 
@@ -19,7 +19,7 @@ public class PetRegisterRequest {
     private String name;
 
     @NotNull(message = "품종을 선택해주세요.")  //Enum은 빈 문자열이 아니라 null인지로 검사
-    private Breed breed;  // enum
+    private PetBreed breed;  // enum
 
     @NotNull(message = "크기를 선택해주세요.")  //Enum은 빈 문자열이 아니라 null인지로 검사
     private PetSize size;  // enum
