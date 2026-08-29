@@ -5,10 +5,12 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.tmd.backend.domain.place.Place;
 import com.tmd.backend.domain.place.QPlace;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
 @RequiredArgsConstructor
+@Repository
 public class PlaceRepositoryImpl implements PlaceRepositoryCustom{
 
     private final JPAQueryFactory jpaQueryFactory;
