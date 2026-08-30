@@ -18,6 +18,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+// 즐겨찾기 추가 기능
+import com.tmd.backend.domain.place.Place;
+import com.tmd.backend.repository.PlaceRepository;
+
 import java.util.List;
 
 @Slf4j  // 로그(log.info 등) 찍을 수 있게 해줌
@@ -32,6 +36,9 @@ public class FavoriteService {
 
     private final UserRepository userRepository;
     // 사용자 데이터를 DB에서 꺼내오는 도구
+
+    private final PlaceRepository placeRepository;  // 즐겨찾기 추가 기능
+    // 이 코드에서 placeRepository를 실제로 사용해서, 이 placeId가 진짜 있는 장소인지 DB에서 확인
 
 
     public PageResponse<FavoriteResponse> getMyFavorites(String email, int page, int size) {
@@ -77,5 +84,43 @@ public class FavoriteService {
         return favoriteRepository.existsByUserIdAndPlaceId(user.getId(), placeId);
         // 이 사용자가 이 장소를 즐겨찾기했는지 true/false로 바로 확인
         // (별도 @Transactional 필요 없음 - 클래스 기본값 readOnly=true로 충분)
+    }
+
+    // 즐겨찾기 추가 기능 위해 메서드 추가
+    @Transactional
+    public void addFavorite(String email, Long placeId) {
+        // 쓰기 작업이라 클래스 기본값(readOnly=true) 대신 별도 적용
+
+        User user = userRepository.findByEmail(email)  // email로 User를 찾음
+            .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+
+        Place place = placeRepository.findById(placeId)  // placeId로 Place를 찾음. 없으면 PLACE_NOT_FOUND
+            .orElseThrow(() -> new BaseException(ErrorCode.PLACE_NOT_FOUND));
+
+        if (favoriteRepository.existsByUserIdAndPlaceId(user.getId(), placeId)) {
+            throw new BaseException(ErrorCode.ALREADY_FAVORITE);
+        }  // 이미 즐겨찾기한 장소면 중복 등록 방지
+
+        Favorite favorite = Favorite.builder()  // 새 즐겨찾기 객체 생성
+            .user(user)
+            .place(place)
+            .build();
+
+        favoriteRepository.save(favorite);  // DB에 저장
+    }
+
+    // 즐겨찾기 삭제 기능 위해 메서드 추가
+    @Transactional  // 쓰기(삭제) 작업이라 클래스 기본값(readOnly=true) 대신 별도 적용
+    public void deleteFavorite(String email, Long placeId) {
+
+        User user = userRepository.findByEmail(email)  // email로 User를 찾음
+            .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+
+        Favorite favorite = favoriteRepository.findByUserIdAndPlaceId(user.getId(), placeId)
+            .orElseThrow(() -> new BaseException(ErrorCode.FAVORITE_NOT_FOUND));
+        // 이 사용자가 이 장소를 즐겨찾기한 기록을 찾음
+        // 없으면 FAVORITE_NOT_FOUND (ErrorCode.java에 이미 있던 값: "즐겨찾기하지 않은 장소입니다.")
+
+        favoriteRepository.delete(favorite);  // 실제 삭제
     }
 }

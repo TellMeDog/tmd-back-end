@@ -60,15 +60,34 @@ public class FavoriteController {
         // 200 OK 상태코드와 함께 true/false 값을 공통 응답 형식(SuccessResponseDto)으로 감싸서 리턴
     }
 
+
+    // 즐겨찾기 추가 - FavoriteController.java의 addFavorite 더미 코드를 진짜 로직으로 교체함
     @PostMapping("/{placeId}")
-    public ResponseEntity<SuccessResponseDto<Void>> addFavorite(@PathVariable Long placeId){
+    public ResponseEntity<SuccessResponseDto<Void>> addFavorite(
+        @AuthenticationPrincipal String email,  // JWT 토큰에서 꺼낸 로그인한 사람의 email이 자동으로 들어옴
+
+        @PathVariable Long placeId  // URL 경로의 {placeId} 값을 받아옴
+    ){
         log.info("즐겨찾기 추가 요청: placeId={}", placeId);
+
+        favoriteService.addFavorite(email, placeId);
+        // Service에게 email과 placeId를 넘겨서 실제로 DB에 즐겨찾기를 등록시킴
+
         return ResponseEntity.ok(SuccessResponseDto.successWithoutData("즐겨찾기에 추가되었습니다."));
     }
 
+    // 즐겨찾기 삭제 - FavoriteController.java의 deleteFavorite 더미 코드를 진짜 로직으로 교체
     @DeleteMapping("/{placeId}")
-    public ResponseEntity<SuccessResponseDto<Void>> deleteFavorite(@PathVariable Long placeId){
+    public ResponseEntity<SuccessResponseDto<Void>> deleteFavorite(
+        @AuthenticationPrincipal String email,  // JWT 토큰에서 꺼낸 로그인한 사람의 email이 자동으로 들어옴
+
+        @PathVariable Long placeId  // URL 경로의 {placeId} 값을 받아옴
+    ){
         log.info("즐겨찾기 삭제 요청: placeId={}", placeId);
+
+        favoriteService.deleteFavorite(email, placeId);
+        // Service에게 email과 placeId를 넘겨서 실제로 DB에서 즐겨찾기를 삭제시킴
+
         return ResponseEntity.ok(SuccessResponseDto.successWithoutData("즐겨찾기가 삭제되었습니다."));
     }
 }
