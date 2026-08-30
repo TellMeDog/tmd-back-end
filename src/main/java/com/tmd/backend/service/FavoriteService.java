@@ -67,4 +67,15 @@ public class FavoriteService {
         return new PageResponse<>(content, (int) favorites.getTotalElements(), favorites.getTotalPages());
         // 변환된 목록과 페이징 정보를 합쳐서 최종 응답 완성
     }
+
+
+    // 즐겨찾기 조회하는 메서드("이 장소, 내가 즐겨찾기 했나요?"라는 질문에 true 또는 false로만 답하면 되는 API)
+    public boolean isFavorite(String email, Long placeId) {
+        User user = userRepository.findByEmail(email)  // email로 User를 찾음
+            .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+
+        return favoriteRepository.existsByUserIdAndPlaceId(user.getId(), placeId);
+        // 이 사용자가 이 장소를 즐겨찾기했는지 true/false로 바로 확인
+        // (별도 @Transactional 필요 없음 - 클래스 기본값 readOnly=true로 충분)
+    }
 }

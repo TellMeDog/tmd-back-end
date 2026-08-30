@@ -41,6 +41,25 @@ public class FavoriteController {
         return ResponseEntity.ok(SuccessResponseDto.success("즐겨찾기 목록을 조회했습니다.", response));
     }
 
+    // 즐겨찾기 여부 조회 기능을 위해 추가
+    @GetMapping("/{placeId}")
+    // GET 방식으로 "/favorites/{placeId}" 요청이 오면 아래 메서드가 실행됨
+    // {placeId} 자리에 실제 숫자(예: /favorites/10)가 들어오면 그 값을 받게 됨
+    public ResponseEntity<SuccessResponseDto<Boolean>> getFavoriteStatus(
+        // 이 장소가 즐겨찾기 되어있는지 true/false를 응답으로 돌려주는 메서드
+
+        @AuthenticationPrincipal String email,  // JWT 토큰에서 꺼낸 로그인한 사람의 email이 자동으로 들어옴
+        @PathVariable Long placeId  // URL 경로에 있는 {placeId} 값을 그대로 받아옴, 예: /favorites/10 요청이면 placeId = 10L
+    ) {
+        log.info("즐겨찾기 여부 조회 요청: placeId={}", placeId);  // 요청 들어온 것을 로그로 남김
+
+        boolean isFavorite = favoriteService.isFavorite(email, placeId);
+        // Service에게 email과 placeId를 넘겨서 이 사람이 이 장소를 즐겨찾기했는지 확인시킴 (결과는 true 또는 false로 돌아옴)
+
+        return ResponseEntity.ok(SuccessResponseDto.success("즐겨찾기 여부를 조회했습니다.", isFavorite));
+        // 200 OK 상태코드와 함께 true/false 값을 공통 응답 형식(SuccessResponseDto)으로 감싸서 리턴
+    }
+
     @PostMapping("/{placeId}")
     public ResponseEntity<SuccessResponseDto<Void>> addFavorite(@PathVariable Long placeId){
         log.info("즐겨찾기 추가 요청: placeId={}", placeId);
