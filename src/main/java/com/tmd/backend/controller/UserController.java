@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -45,5 +46,19 @@ public class UserController {
         );
         // 200 OK 상태코드와 함께, SuccessResponseDto로 감싼 최종 응답을 리턴
         // (success: true, message: "내 정보 조회가 완료되었습니다.", data: response)
+    }
+
+
+    // 회원탈퇴 withdraw 다루는 메서드 추가
+    @DeleteMapping("/me")  // DELETE 방식으로 "/users/me" 요청이 오면 아래 메서드가 실행됨
+    public ResponseEntity<SuccessResponseDto<Void>> withdraw(
+        @AuthenticationPrincipal String email
+        // JWT 토큰에서 꺼낸 로그인한 사람의 email이 자동으로 들어옴
+    ) {
+        userService.withdraw(email);
+        // Service에게 email을 넘겨서 실제로 회원 탈퇴(연관 데이터 삭제 포함) 처리시킴
+
+        return ResponseEntity.ok(SuccessResponseDto.successWithoutData("회원 탈퇴가 완료되었습니다."));
+        // 200 OK와 함께, 데이터 없이 성공 메시지만 리턴
     }
 }
