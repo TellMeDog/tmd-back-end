@@ -13,6 +13,9 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
+// 이메일 중복 방지 로직 위해 추가
+import org.springframework.security.oauth2.core.OAuth2Error;
+
 @Service
 @RequiredArgsConstructor
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
@@ -32,11 +35,17 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         // email 중복 방지 로직을 위해 코드 수정
         User user = userRepository.findByProviderAndProviderId(provider, providerId)
             .orElseGet(() -> {
-                // 이 provider로는 처음이지만, 혹시 다른 provider로 같은 이메일이 이미 가입되어 있는지 먼저 확인
                 userRepository.findByEmail(email)
-                    .ifPresent(existingUser -> {  // 만약 이미 그 이메일로 가입된 User가 있으면 (provider가 뭐든 상관없이) 예외를 던져서 새 계정 생성을 막음
-                        throw new OAuth2AuthenticationException(  // Spring Security의 OAuth2 인증 과정에서 쓰는 표준 예외 타입 (여기서는 이 타입으로 던져야 Spring Security 흐름에 맞음)
-                            "이미 " + existingUser.getProvider() + "(으)로 가입된 이메일입니다."
+                    .ifPresent(existingUser -> {
+                        throw new OAuth2AuthenticationException(
+                            new OAuth2Error(
+                                "duplicate_email",
+                                // 규격화된 짧은 에러 코드
+                                "이미 " + existingUser.getProvider() + "(으)로 가입된 이메일입니다.",
+                                // 실제 사람이 읽을 설명 메시지
+                                null
+                                // 에러 참고 URI (없으므로 null)
+                            )
                         );
                     });
 
