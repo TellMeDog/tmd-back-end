@@ -67,7 +67,7 @@ public class AuthService {
         String password = signUpRequest.getPassword();
         String confirmPassword = signUpRequest.getConfirmPassword();
         // 1. 이메일 중복 체크 -> 중복이면 BaseException(ErrorCdoe.DUPLICATE_EMAIL)
-        if(userRepository.existsByEmailAndProvider(email, AuthProvider.LOCAL)){
+        if(userRepository.existsByEmail(email)){  // 이메일 중복 체크 로직 위해 수정
             throw new BaseException(ErrorCode.DUPLICATE_EMAIL);
         }
         SignUpCache cache = (SignUpCache) redisTemplate.opsForValue().get("signup:" + email);

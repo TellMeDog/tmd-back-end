@@ -17,4 +17,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // email 컬럼으로 찾기 명령 -> spring이 인식해서 SQL 생성해 줌
     // Optional<User>: User가 있을 수도 없을 수도 있다 -> NullPointerException 방지
     Optional<User> findByEmail(String email);
+
+    boolean existsByEmail(String email);
+    // provider 상관없이, 이 email 자체가 이미 존재하는지 확인
+    // email 중복 가입 방지 로직에 사용하려고 추가
 }
