@@ -25,6 +25,7 @@ import java.time.Duration;
 public class AuthController {
     private final AuthService authService;
 
+/*
     @PostMapping("/send-verification-code")
     public ResponseEntity<SuccessResponseDto<Void>> sendVerificationCode(@Valid @RequestBody SendVerificationCodeRequest request){
         authService.generateCodeAndSendMail(request.getEmail().trim());
@@ -36,6 +37,7 @@ public class AuthController {
         authService.verifyEmail(request.getEmail(), request.getCode());
         return ResponseEntity.ok(SuccessResponseDto.successWithoutData("이메일 인증이 완료되었습니다."));
     }
+*/
 
     @PostMapping("/signup")
     public ResponseEntity<SuccessResponseDto<Void>> signup(@Valid @RequestBody SignUpRequest signUpRequest){

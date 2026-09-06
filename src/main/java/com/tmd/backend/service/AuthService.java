@@ -34,7 +34,7 @@ public class AuthService {
 
     // 이메일 인증 번호 받기 버튼 클릭
     // 이메일 받은 후 -> 코드 생성 -> Cache 생성 -> Redis에 Key:Value 저장 -> 이메일 발송
-    public void generateCodeAndSendMail(String email){
+    /*public void generateCodeAndSendMail(String email){
         // 코드 생성
         String code = String.valueOf((int) (Math.random() * 900000) + 100000);
         SignUpCache cache = new SignUpCache(code, false);
@@ -44,11 +44,11 @@ public class AuthService {
             Duration.ofMinutes(5)
             );
         mailService.sendVerificationEmail(email, code);
-    }
+    }*/
 
     // 이메일 인증 완료 버튼 클릭
     // 이메일과 코드를 받은 후 -> Redis Cache의 code와 받은 code가 일치하면 isVerified=true 설정 후 TTL 연장 -> 그게 아니라면 Exception
-    public void verifyEmail(String email, String code){
+    /*public void verifyEmail(String email, String code){
         SignUpCache cache = (SignUpCache) redisTemplate.opsForValue().get("signup:" + email);
         if(cache == null) throw new BaseException(ErrorCode.EXPIRED_TOKEN);
         if(cache.code().equals(code)) {
@@ -59,7 +59,7 @@ public class AuthService {
                 Duration.ofMinutes(10)
             );
         }else throw new BaseException(ErrorCode.INVALID_TOKEN);
-    }
+    }*/
 
     @Transactional
     public void localSignUp(SignUpRequest signUpRequest){
@@ -70,8 +70,8 @@ public class AuthService {
         if(userRepository.existsByEmailAndProvider(email, AuthProvider.LOCAL)){
             throw new BaseException(ErrorCode.DUPLICATE_EMAIL);
         }
-        SignUpCache cache = (SignUpCache) redisTemplate.opsForValue().get("signup:" + email);
-        if(cache == null || !cache.isVerified()) throw new BaseException(ErrorCode.NOT_VERIFIED_EMAIL);
+        /*SignUpCache cache = (SignUpCache) redisTemplate.opsForValue().get("signup:" + email);
+        if(cache == null || !cache.isVerified()) throw new BaseException(ErrorCode.NOT_VERIFIED_EMAIL);*/
         // 2. '비밀번호'와 '비밀번호 확인' 체크
         if(!password.equals(confirmPassword)){
             throw new BaseException(ErrorCode.PASSWORD_CONFIRM_FAIL);
@@ -81,7 +81,7 @@ public class AuthService {
         User user = User.createLocal(email, encodedPassword);
         userRepository.save(user);
 
-        redisTemplate.delete("signup:" + email);
+        // redisTemplate.delete("signup:" + email);
     }
 
     public JwtToken localLogin(LoginRequest loginRequest){
