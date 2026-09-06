@@ -6,6 +6,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.math.NumberUtils;
 
 @Entity
 @Getter
@@ -21,8 +22,8 @@ public class Place {
     private String addr1;
     private String addr2;
     private String title;
-    private double mapX;
-    private double mapY;
+    private Double mapX;
+    private Double mapY;
     private String firstImage;
     private String firstImage2;
     private String modifiedTime;
@@ -36,7 +37,7 @@ public class Place {
     private PlacePetInfo placePetInfo;
 
     @Builder
-    public Place(String contentId, String zipCode, String addr1, String addr2, String title, double mapX, double mapY, String firstImage, String firstImage2, String modifiedTime, String lDongRegnCd, String lDongSignguCd, String lclsSystm1, String lclsSystm2, String lclsSystm3) {
+    public Place(String contentId, String zipCode, String addr1, String addr2, String title, Double mapX, Double mapY, String firstImage, String firstImage2, String modifiedTime, String lDongRegnCd, String lDongSignguCd, String lclsSystm1, String lclsSystm2, String lclsSystm3) {
         this.contentId = contentId;
         this.zipCode = zipCode;
         this.addr1 = addr1;
@@ -54,7 +55,7 @@ public class Place {
         this.lclsSystm3 = lclsSystm3;
     }
 
-    public static Place create(String contentId, String zipCode, String addr1, String addr2, String title, double mapX, double mapY, String firstImage, String firstImage2, String modifiedTime, String lDongRegnCd, String lDongSignguCd, String lclsSystm1, String lclsSystm2, String lclsSystm3) {
+    public static Place create(String contentId, String zipCode, String addr1, String addr2, String title, Double mapX, Double mapY, String firstImage, String firstImage2, String modifiedTime, String lDongRegnCd, String lDongSignguCd, String lclsSystm1, String lclsSystm2, String lclsSystm3) {
         return Place.builder()
             .contentId(contentId)
             .zipCode(zipCode)
@@ -77,15 +78,15 @@ public class Place {
     public static Place from(TourApiPlaceItem item) {
         return Place.builder()
             .contentId(item.getContentid())
-            .zipCode(item.getZipCode())
+            .zipCode(item.getZipcode())
             .addr1(item.getAddr1())
             .addr2(item.getAddr2())
             .title(item.getTitle())
-            .mapX(Double.parseDouble(item.getMapx()))
-            .mapY(Double.parseDouble(item.getMapy()))
-            .firstImage(item.getFirstImage())
-            .firstImage2(item.getFirstImage2())
-            .modifiedTime(item.getModifiedTime())
+            .mapX(NumberUtils.toDouble(item.getMapx()))
+            .mapY(NumberUtils.toDouble(item.getMapy()))
+            .firstImage(item.getFirstimage())
+            .firstImage2(item.getFirstimage2())
+            .modifiedTime(item.getModifiedtime())
             .lDongRegnCd(item.getLDongRegnCd())
             .lDongSignguCd(item.getLDongSignguCd())
             .lclsSystm1(item.getLclsSystm1())

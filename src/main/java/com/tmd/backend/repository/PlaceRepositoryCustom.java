@@ -11,4 +11,6 @@ public interface PlaceRepositoryCustom {
     List<Place> findPlacesWithKeyword(String keyword);
 
     List<Place> findPlacesByRegion(String lDongRegnCd, String lDongSignguCd);
+
+    List<Place> findPlacesWithoutPetInfo(int limit);
 }

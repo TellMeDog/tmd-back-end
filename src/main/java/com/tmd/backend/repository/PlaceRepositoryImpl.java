@@ -4,6 +4,7 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.tmd.backend.domain.place.Place;
 import com.tmd.backend.domain.place.QPlace;
+import com.tmd.backend.domain.place.QPlacePetInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -16,13 +17,14 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom{
     private final JPAQueryFactory jpaQueryFactory;
 
     private static final QPlace place = QPlace.place;
+    private static final QPlacePetInfo placePetInfo = QPlacePetInfo.placePetInfo;
 
     @Override
     public List<Place> findPlacesWithCategory(double swLat, double swLng, double neLat, double neLng,
                                               String lclsSystm1, String lclsSystm2, String lclsSystm3) {
-
         return jpaQueryFactory
             .selectFrom(place)
+            .leftJoin(place.placePetInfo, placePetInfo).fetchJoin()
             .where(
                 place.mapX.between(swLng, neLng),
                 place.mapY.between(swLat, neLat),
@@ -36,20 +38,33 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom{
     public List<Place> findPlacesWithKeyword(String keyword) {
         return jpaQueryFactory
             .selectFrom(place)
+            .leftJoin(place.placePetInfo, placePetInfo).fetchJoin()
             .where(
-                place.addr1.contains(keyword).or(place.addr2.contains(keyword)) .or(place.title.contains(keyword))
+                place.addr1.contains(keyword).or(place.addr2.contains(keyword)).or(place.title.contains(keyword))
             )
             .fetch();
     }
 
     @Override
-    public List<Place> findPlacesByRegion(String lDongRegnCd, String lDongSignguCd){
+    public List<Place> findPlacesByRegion(String lDongRegnCd, String lDongSignguCd) {
         return jpaQueryFactory
             .selectFrom(place)
+            .leftJoin(place.placePetInfo, placePetInfo).fetchJoin()
             .where(
                 lDongRegnCdEq(lDongRegnCd),
                 lDongSignguCdEq(lDongSignguCd)
             )
+            .fetch();
+    }
+
+    @Override
+    public List<Place> findPlacesWithoutPetInfo(int limit) {
+        return jpaQueryFactory
+            .selectFrom(place)
+            .leftJoin(placePetInfo).on(placePetInfo.place.eq(place))
+            .where(placePetInfo.id.isNull())
+            .orderBy(place.id.asc())
+            .limit(limit)
             .fetch();
     }
 

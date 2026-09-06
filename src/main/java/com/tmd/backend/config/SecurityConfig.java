@@ -38,7 +38,8 @@ public class SecurityConfig {
                     .requestMatchers("/auth/login",
                         "/auth/signup", "/auth/send-verification-code", "/auth/verify-email","/auth/reissue",
                         "/swagger-ui/**", "/v3/api-docs/**",
-                        "/oauth2/**", "/login/oauth2/**").permitAll()
+                        "/oauth2/**", "/login/oauth2/**",
+                        "/admin/**").permitAll()
                 .anyRequest().authenticated())
             .csrf(AbstractHttpConfigurer::disable)
             .httpBasic(AbstractHttpConfigurer::disable)

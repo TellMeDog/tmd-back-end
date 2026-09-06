@@ -1,5 +1,6 @@
 package com.tmd.backend.domain.place;
 
+import com.tmd.backend.common.PetInfoStatus;
 import com.tmd.backend.external.TourApiPetInfoItem;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -27,10 +28,14 @@ public class PlacePetInfo {
     private String relaFrnshPrdlst; // 관련 비치 품목
     private String relaPurcPrdlst; // 관련 구매 품목
     private String relaRntlPrdlst; // 관련 렌탈 품목
+    @Column(columnDefinition = "TEXT")
     private String etcAcmpyInfo; // 기타 동반 정보 ex. 안전을 위해 목줄은 2m 이내로 유지, 별도의 쓰레기 처리 시설이 없으므로 배변봉투 지참 및 수거 필수
 
+    @Enumerated(EnumType.STRING)
+    private PetInfoStatus status;
+
     @Builder
-    private PlacePetInfo(Place place, String acmpyTypeCd, String acmpyPsblCpam, String acmpyNeedMtr, String relaAcdntRiskMtr, String relaPosesFclty, String relaFrnshPrdlst, String relaPurcPrdlst, String relaRntlPrdlst, String etcAcmpyInfo) {
+    private PlacePetInfo(Place place, String acmpyTypeCd, String acmpyPsblCpam, String acmpyNeedMtr, String relaAcdntRiskMtr, String relaPosesFclty, String relaFrnshPrdlst, String relaPurcPrdlst, String relaRntlPrdlst, String etcAcmpyInfo, PetInfoStatus status) {
         this.place = place;
         this.acmpyTypeCd = acmpyTypeCd;
         this.acmpyPsblCpam = acmpyPsblCpam;
@@ -41,10 +46,11 @@ public class PlacePetInfo {
         this.relaPurcPrdlst = relaPurcPrdlst;
         this.relaRntlPrdlst = relaRntlPrdlst;
         this.etcAcmpyInfo = etcAcmpyInfo;
+        this.status = status;
     }
 
     // 원본 응답 DTO -> PlacePetInfo로 가공
-    public static PlacePetInfo from(Place place, TourApiPetInfoItem item){
+    public static PlacePetInfo from(Place place, TourApiPetInfoItem item, PetInfoStatus status){
         return PlacePetInfo.builder()
             .place(place)
             .acmpyTypeCd(item.getAcmpyTypeCd())
@@ -56,17 +62,14 @@ public class PlacePetInfo {
             .relaPurcPrdlst(item.getRelaPurcPrdlst())
             .relaRntlPrdlst(item.getRelaRntlPrdlst())
             .etcAcmpyInfo(item.getEtcAcmpyInfo())
+            .status(status)
             .build();
     }
 
-    // 마커색/체크리스트 계산 시 쓸, 4개 필드를 합친 텍스트
-    // 근데 필드가 null로 올시 GREEN으로 볼지, YELLOW로 볼지 논의 필요
-    public String combinedText() {
-        return String.join(" ",
-            nullToEmpty(acmpyTypeCd), nullToEmpty(acmpyPsblCpam), nullToEmpty(acmpyNeedMtr), nullToEmpty(etcAcmpyInfo));
-    }
-
-    private String nullToEmpty(String s){
-        return s == null ? "" : s;
+    public static PlacePetInfo empty(Place place, PetInfoStatus status){
+        return PlacePetInfo.builder()
+            .place(place)
+            .status(status)
+            .build();
     }
 }
