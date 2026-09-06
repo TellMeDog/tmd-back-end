@@ -17,4 +17,9 @@ public class PetUpdateRequest {
     private PetBreed breed; // enum
     private PetSize size; // enum
     private String imageUrl;
+
+    private Boolean hasMuzzle;
+    private Boolean hasLeash;
+    private Boolean hasCarrier;
+    private Boolean isVaccinated;
 }

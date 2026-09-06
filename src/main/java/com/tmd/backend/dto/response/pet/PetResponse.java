@@ -14,12 +14,22 @@ public class PetResponse {
     private String size;
     private String imageUrl;
 
+    private boolean hasMuzzle;
+    private boolean hasLeash;
+    private boolean hasCarrier;
+    private boolean isVaccinated;
+
     @Builder
-    public PetResponse(Long petId, String name, String breed, String size, String imageUrl) {
-        this.petId=petId;
+    public PetResponse(Long petId, String name, String breed, String size, String imageUrl,
+                       boolean hasMuzzle, boolean hasLeash, boolean hasCarrier, boolean isVaccinated) {
+        this.petId = petId;
         this.name = name;
         this.breed = breed;
-        this.size=size;
-        this.imageUrl=imageUrl;
+        this.size = size;
+        this.imageUrl = imageUrl;
+        this.hasMuzzle = hasMuzzle;
+        this.hasLeash = hasLeash;
+        this.hasCarrier = hasCarrier;
+        this.isVaccinated = isVaccinated;
     }
 }

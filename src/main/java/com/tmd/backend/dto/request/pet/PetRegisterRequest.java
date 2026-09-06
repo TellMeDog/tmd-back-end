@@ -25,4 +25,9 @@ public class PetRegisterRequest {
     private PetSize size;  // enum
 
     private String imageUrl;
+
+    private boolean hasMuzzle;
+    private boolean hasLeash;
+    private boolean hasCarrier;
+    private boolean isVaccinated;
 }
