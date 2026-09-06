@@ -65,7 +65,7 @@ public class ReviewService {
             request.getEtcReasons(),
             request.getRating(),
             request.getContent(),
-            request.getImagekey()
+            request.getImageKey()
         ));
         evictPlaceCache(placeId);
     }

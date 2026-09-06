@@ -28,7 +28,7 @@ public class R2Config {
             .endpointOverride(URI.create(endpoint))
             .credentialsProvider(StaticCredentialsProvider.create(
                 AwsBasicCredentials.create(accessKey, secretKey)))
-            .region(Region.US_EAST_1) // R2는 endpoint override 시 region 무시
+            .region(Region.of("auto"))
             .build();
     }
 }

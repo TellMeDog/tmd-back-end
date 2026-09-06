@@ -6,6 +6,7 @@ import com.tmd.backend.dto.response.PageResponse;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -34,5 +35,9 @@ public class ReviewCreateRequest {
     private Integer rating;
 
     private String content;
-    private String imagekey;
+    @Pattern(
+        regexp = "^images/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\.(jpg|jpeg|png|gif|webp)$",
+        message = "올바르지 않은 이미지 키입니다."
+    )
+    private String imageKey;
 }
