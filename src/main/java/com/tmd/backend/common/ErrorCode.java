@@ -19,6 +19,8 @@ public enum ErrorCode {
     INVALID_CATEGORY(HttpStatus.BAD_REQUEST, "지원하지 않는 카테고리입니다."),
     INVALID_REVIEW_REQUEST(HttpStatus.BAD_REQUEST, "안내된 조건과 달랐어요를 선택한 경우에만 상세 사유를 입력할 수 있습니다."),
     INVALID_MAP_BOUNDS(HttpStatus.BAD_REQUEST, "범위를 초과한 반경입니다."),
+    INVALID_IMAGE_TYPE(HttpStatus.BAD_REQUEST, "허용되지 않는 이미지 형식입니다. (jpg, jpeg, png, gif, webp)"),
+    INVALID_IMAGE_SIZE(HttpStatus.BAD_REQUEST, "이미지 크기가 올바르지 않거나 허용 범위를 초과했습니다."),
     UNKNOWN_REGION(HttpStatus.BAD_REQUEST, "등록되지 않은 지역입니다."),
 
     //401

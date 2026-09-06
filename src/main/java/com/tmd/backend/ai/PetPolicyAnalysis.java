@@ -1,13 +1,29 @@
 package com.tmd.backend.ai;
 
-import java.util.List;
-
 public record PetPolicyAnalysis(
+    Long placeId,
+
+    Boolean petAllowed,
+    Boolean allBreedsAllowed,
+    Boolean dangerousBreedAllowed,
+    Boolean dangerousBreedMuzzleRequired,
+
+    Double maxWeightKg,
+    WeightLimitType weightLimitType,
+
+    Boolean leashRequired,
+    Boolean muzzleRequired,
+    Boolean kennelRequired,
+    Boolean strollerAllowed,
+
+    Boolean vaccinationRequired,
+    Boolean advanceInquiryRequired,
+
+    Integer maxPetCount,
+
     AccessScope accessScope,
-    List<PolicyCondition> conditions,
-    Integer maxPetsPerPerson,
-    WeightLimit weightLimit,
-    List<String> exceptions,
-    String summary
+    String accessAreaDescription,
+
+    String exceptions
 ) {
 }

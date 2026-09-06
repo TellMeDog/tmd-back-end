@@ -1,17 +1,21 @@
 package com.tmd.backend.ai;
 
-import com.tmd.backend.external.TourApiPetInfoItem;
+import com.tmd.backend.domain.place.PlacePetInfo;
 
-public record PetPolicyInput(String accidentRisk, String accompanyType, String possibleCapacity, String requiredItems, String additionalInfo) {
-
-    public PetPolicyInput toPolicyInput(TourApiPetInfoItem item){
+public record PetPolicyInput(
+    Long placeId,
+    String accidentRisk,
+    String possibleCapacity,
+    String requiredItems,
+    String additionalInfo
+) {
+    public static PetPolicyInput from(PlacePetInfo info) {
         return new PetPolicyInput(
-            item.getRelaAcdntRiskMtr(),
-            item.getAcmpyTypeCd(),
-            item.getAcmpyPsblCpam(),
-            item.getAcmpyNeedMtr(),
-            item.getEtcAcmpyInfo()
+            info.getPlace().getId(),
+            info.getRelaAcdntRiskMtr(),
+            info.getAcmpyPsblCpam(),
+            info.getAcmpyNeedMtr(),
+            info.getEtcAcmpyInfo()
         );
     }
 }
-

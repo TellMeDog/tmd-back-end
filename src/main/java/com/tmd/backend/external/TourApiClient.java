@@ -14,7 +14,6 @@ import java.util.Optional;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class TourApiClient {
     private static final String BASE_URL = "https://apis.data.go.kr/B551011/KorPetTourService2";
     private static final long NUM_OF_ROWS = 11000;
@@ -22,17 +21,22 @@ public class TourApiClient {
     @Value("${tourapi.service-key}")
     private String serviceKey;
 
-    private final RestClient restClient = RestClient.create();
+    private final RestClient restClient;
+
+    public TourApiClient(RestClient.Builder builder) {
+        this.restClient = builder.build();
+    }
 
     public TourApiPetInfoItem getPetTourInfo(String contentId) {
-        URI uri = UriComponentsBuilder.newInstance()
-            .path(BASE_URL + "/detailPetTour2")
-            .query("serviceKey={serviceKey}")
-            .query("MobileOS=ETC")
-            .query("MobileApp=TellMeDog")
-            .query("contentId={contentId}")
-            .query("_type=json")
-            .buildAndExpand(serviceKey, contentId)
+        URI uri = UriComponentsBuilder
+            .fromUriString(BASE_URL)
+            .path("/detailPetTour2")
+            .queryParam("serviceKey", serviceKey)
+            .queryParam("MobileOS", "ETC")
+            .queryParam("MobileApp", "TellMeDog")
+            .queryParam("contentId", contentId)
+            .queryParam("_type", "json")
+            .build()
             .toUri();
 
         TourApiResponse<TourApiPetInfoItem> response = restClient.get()
@@ -107,13 +111,12 @@ public class TourApiClient {
     public List<TourApiPlaceItem> getTourSyncList(){
         URI uri = UriComponentsBuilder
             .fromUriString(BASE_URL)
-            .path("/ldongCode2")
+            .path("/petTourSyncList2")
             .queryParam("serviceKey", serviceKey)
             .queryParam("numOfRows", NUM_OF_ROWS)
             .queryParam("MobileOS", "ETC")
             .queryParam("MobileApp", "TellMeDog")
             .queryParam("_type", "json")
-            .encode()
             .build()
             .toUri();
 

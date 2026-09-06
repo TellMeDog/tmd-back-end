@@ -13,11 +13,10 @@ public class KeywordCacheService {
 
     private final RedisTemplate<String, Object> redisTemplate;
 
-    public boolean isFetched(String keyword){
-        return Boolean.TRUE.equals(redisTemplate.hasKey(KEY_PREFIX_FOR_KEYWORD_SEARCHING + keyword));
-    }
-
-    public void markFetched(String keyword){
-        redisTemplate.opsForValue().set(KEY_PREFIX_FOR_KEYWORD_SEARCHING, "true", Duration.ofDays(14));
+    // setIfAbsent는 atomic — 동시 요청 중 최초 1개만 true 반환
+    public boolean tryMarkFetched(String keyword) {
+        Boolean set = redisTemplate.opsForValue()
+            .setIfAbsent(KEY_PREFIX_FOR_KEYWORD_SEARCHING + keyword, "true", Duration.ofDays(14));
+        return Boolean.TRUE.equals(set);
     }
 }

@@ -9,15 +9,10 @@ import java.util.List;
 
 @Getter
 @Builder
-public class ReviewDetailResponse {
+public class MyReviewDetailResponse {
     private Long reviewId;
-    private Long placeId;
-    private String placeTitle;
-    private Long petId;
-    private String petName;
     private FeedbackType feedbackType;
     private List<MismatchReason> mismatchReasons;
-    private String etcReason;
     private int rating;
     private String content;
     private String imageKey;

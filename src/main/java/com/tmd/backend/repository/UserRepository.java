@@ -8,9 +8,7 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByEmailAndProvider(String email, AuthProvider provider);
-
     boolean existsByEmailAndProvider(String email, AuthProvider provider);
-
     Optional<User> findByProviderAndProviderId(AuthProvider provider, String providerId);
 
     // "DB에서 데이터를 꺼내오는 방법"을 추가하는 코드

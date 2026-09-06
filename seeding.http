@@ -1,0 +1,10 @@
+### Place 시딩
+POST http://localhost:8080/admin/seed/places
+
+###
+
+POST http://localhost:8080/admin/seed/pet-policies
+
+###
+
+POST http://localhost:8080/admin/seed/analyze

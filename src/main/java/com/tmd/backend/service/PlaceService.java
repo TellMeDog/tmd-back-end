@@ -1,6 +1,7 @@
 package com.tmd.backend.service;
 
 import com.tmd.backend.common.ErrorCode;
+import com.tmd.backend.common.PetInfoStatus;
 import com.tmd.backend.common.Region;
 import com.tmd.backend.common.RegionDetail;
 import com.tmd.backend.domain.pet.Pet;
@@ -36,6 +37,7 @@ public class PlaceService {
     private final PlacePetInfoRepository placePetInfoRepository;
     private final MarkerColorService markerColorService;
     private final KeywordCacheService keywordCacheService;
+    private final ReviewService reviewService;
 
     // Key Enum으로 할지 고려
     private static final Map<String, List<CategoryCode>> CATEGORY_MAP = Map.of(
@@ -83,13 +85,12 @@ public class PlaceService {
 
     // 검색창에 검색 로직
     public List<PlaceMarkerResponse> searchByKeyword(String keyword, Long petId, String email){
-        if(!keywordCacheService.isFetched(keyword)){
+        if (keywordCacheService.tryMarkFetched(keyword)) {
             List<TourApiPlaceItem> items = tourApiClient.getPlacesByKeyword(keyword);
-            for(TourApiPlaceItem item : items){
+            for (TourApiPlaceItem item : items) {
                 placeRepository.findByContentId(item.getContentid())
                     .orElseGet(() -> placeRepository.save(Place.from(item)));
             }
-            keywordCacheService.markFetched(keyword);
         }
         List<Place> places = placeRepository.findPlacesWithKeyword(keyword);
 
@@ -142,13 +143,9 @@ public class PlaceService {
             .etcAcmpyInfo(info.getEtcAcmpyInfo())
             .build();
 
-        PlaceDetailResponse.VisitStats mockVisitStats = PlaceDetailResponse.VisitStats.builder()
-            .enteredCount(100)
-            .mismatchedCount(10)
-            .deniedCount(1)
-            .lastReportedAt("2026-08-23").build();
+        PlaceDetailResponse.VisitStats visitStats = reviewService.getVisitStats(placeId);
 
-        String dist = String.valueOf(calculateDistance(mapX, mapY, place.getMapX(), place.getMapY()));
+        long dist = calculateDistance(mapX, mapY, place.getMapX(), place.getMapY());
 
         return PlaceDetailResponse.builder()
             .placeId(placeId)
@@ -166,8 +163,10 @@ public class PlaceService {
             .markerColor(markerColor)
             .petPolicyInfo(petPolicyInfo)
             .isFavorite(true) // TODO: 즐겨찾기 로직 후 변경
-            .averageRating(4.0) // TODO: 리뷰 로직 후 변경
-            .visitStats(mockVisitStats).build();
+            .averageRating(reviewService.getAverageRating(placeId))
+            .visitStats(visitStats)
+            .recentReviews(reviewService.getRecentReviews(placeId))
+            .build();
     }
 
     private void fetchAndCacheRegionByCategory(double gridLat, double gridLng, String radius, List<CategoryCode> codes) {
@@ -177,9 +176,9 @@ public class PlaceService {
             for (TourApiPlaceItem item : items) {
                 placeRepository.findByContentId(item.getContentid())
                     .orElseGet(() -> placeRepository.save(Place.create(
-                        item.getContentid(), item.getZipCode(), item.getAddr1(),item.getAddr1(), item.getTitle(),
+                        item.getContentid(), item.getZipcode(), item.getAddr1(),item.getAddr1(), item.getTitle(),
                         Double.parseDouble(item.getMapx()), Double.parseDouble(item.getMapy()),
-                        item.getFirstImage(), item.getFirstImage2(), item.getModifiedTime(),
+                        item.getFirstimage(), item.getFirstimage2(), item.getModifiedtime(),
                         item.getLDongRegnCd(), item.getLDongSignguCd(),
                         item.getLclsSystm1(), item.getLclsSystm2(), item.getLclsSystm3()
                     )));
@@ -206,7 +205,7 @@ public class PlaceService {
         TourApiPetInfoItem item = tourApiClient.getPetTourInfo(place.getContentId());
         if (item == null) return null;
 
-        PlacePetInfo info = PlacePetInfo.from(place, item);
+        PlacePetInfo info = PlacePetInfo.from(place, item, PetInfoStatus.SUCCESS);
         placePetInfoRepository.save(info);
         return info;
     }

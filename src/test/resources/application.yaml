@@ -12,8 +12,12 @@ spring:
       host: localhost
       port: 6379
   ai:
-    google:
-      genai:
-        api-key: ${GEMINI_API_KEY}
-        chat:
-          model: gemini-3.6-flash
+    openai:
+      api-key: ${NVIDIA_API_KEY}
+      base-url: https://integrate.api.nvidia.com/v1
+      chat:
+        model: deepseek-ai/deepseek-v4-pro-0813
+        temperature: 0.0
+        max-tokens: 2048
+    model:
+      embedding: none
