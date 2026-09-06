@@ -42,6 +42,7 @@ public enum ErrorCode {
     PET_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 반려견입니다."),
     PLACE_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 장소입니다."),
     REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 리뷰입니다."),
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 사용자입니다."), //UserService 구현 시 이메일을 못 찾을 상황 처리를 위해 추가한 코드
     //409
     DUPLICATE_EMAIL(HttpStatus.CONFLICT, "이미 가입한 이메일입니다."),
     ALREADY_FAVORITE(HttpStatus.CONFLICT, "이미 즐겨찾기한 장소입니다."),
