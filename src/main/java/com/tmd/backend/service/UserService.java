@@ -3,14 +3,22 @@
 package com.tmd.backend.service;
 
 import com.tmd.backend.common.ErrorCode;
+import com.tmd.backend.domain.favorite.Favorite;
+import com.tmd.backend.domain.pet.Pet;
 import com.tmd.backend.domain.user.User;
 import com.tmd.backend.dto.response.user.UserResponse;
 import com.tmd.backend.exception.BaseException;
+import com.tmd.backend.repository.FavoriteRepository;
+import com.tmd.backend.repository.PetRepository;
 import com.tmd.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Slf4j
 // 이 클래스 안에서 log.info(...), log.warn(...) 같은 로그 코드를 쓸 수 있게 해 줌
@@ -32,6 +40,10 @@ public class UserService {
     private final UserRepository userRepository;
     // Repository를 필드로 선언. final이라 한번 정해지면 안 바뀜
     // @RequiredArgsConstructor 덕분에 이 필드는 자동으로 생성자 주입됨
+
+    // 회원탈퇴 시 pet, favorite 엔티티 연쇄 삭제 위해 작성
+    private final PetRepository petRepository;
+    private final FavoriteRepository favoriteRepository;
 
     public UserResponse getMyInfo(String email) {
         // 이메일을 받아서 UserResponse를 리턴하는 메서드 시작
@@ -64,5 +76,22 @@ public class UserService {
 
             .build();
         // 지금까지 채운 값들로 실제 UserResponse 객체를 완성해서 리턴
+    }
+
+
+    // 회원 탈퇴 메서드 추가
+    @Transactional
+    public void withdraw(String email) {
+        User user = userRepository.findByEmail(email)  // email로 탈퇴할 User를 찾음
+            .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+
+        List<Pet> pets = petRepository.findByUserId(user.getId());
+        petRepository.deleteAll(pets);  // 이 사용자가 등록한 반려견들을 먼저 전부 삭제
+
+        // Pageable.unpaged() = 페이징 없이 전체 다 가져오라는 뜻
+        Page<Favorite> favorites = favoriteRepository.findAllByUserId(user.getId(), Pageable.unpaged());
+        favoriteRepository.deleteAll(favorites);  // 이 사용자의 즐겨찾기들도 먼저 전부 삭제
+
+        userRepository.delete(user);  // 연관된 데이터를 다 지운 뒤, 마지막으로 User 자체를 삭제
     }
 }
