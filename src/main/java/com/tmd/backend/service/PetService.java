@@ -54,6 +54,10 @@ public class PetService {
                 .breed(pet.getBreed().name())  // ← .name() 추가: Enum 값을 문자열로 바꿔주는 기능
                 .size(pet.getSize().name())  // ← .name() 추가: Enum 값을 문자열로 바꿔주는 기능
                 .imageUrl(pet.getImageUrl())
+                .hasMuzzle(pet.isHasMuzzle())
+                .hasLeash(pet.isHasLeash())
+                .hasCarrier(pet.isHasCarrier())
+                .isVaccinated(pet.isVaccinated())
                 .build())
             // Pet(원본, DB 그대로의 형태) 하나하나를 PetResponse(응답용, 프론트에 보여줄 형태)로 변환
 
@@ -76,6 +80,10 @@ public class PetService {
                 .breed(req.getBreed()) // 요청에서 받은 품종을 그대로 사용  // req.getBreed()는 이제 PetRegisterRequest에서 이미 Breed(Enum)로 받고 있음
                 .size(req.getSize()) // 요청에서 받은 크기를 그대로 사용
                 .imageUrl(req.getImageUrl()) // 요청에서 받은 이미지 URL (없으면 null, 필수 아님)
+                .hasMuzzle(req.isHasMuzzle())
+                .hasLeash(req.isHasLeash())
+                .hasCarrier(req.isHasCarrier())
+                .isVaccinated(req.isVaccinated())
                 .build()) // 위 값들로 Pet 객체 하나를 완성 (아직 DB엔 저장 안 된 상태, 메모리 상에서만 만들어진 상태)
             .toList(); // req(요청) 하나하나를 Pet 객체로 바꾼 결과들을 리스트로 모음
 
@@ -92,6 +100,10 @@ public class PetService {
                 .breed(pet.getBreed().name())  // ← .name() 추가
                 .size(pet.getSize().name())  // ← .name() 추가
                 .imageUrl(pet.getImageUrl())
+                .hasMuzzle(pet.isHasMuzzle())
+                .hasLeash(pet.isHasLeash())
+                .hasCarrier(pet.isHasCarrier())
+                .isVaccinated(pet.isVaccinated())
                 .build()) // 저장된 Pet(원본 Entity)을 PetResponse(응답용 DTO)로 변환
 
             .toList(); // 변환된 것들을 다시 리스트로 모아서 최종 리턴
@@ -120,7 +132,11 @@ public class PetService {
             request.getName(),
             request.getBreed(),
             request.getSize(),
-            request.getImageUrl()
+            request.getImageUrl(),
+            request.getHasMuzzle(),
+            request.getHasLeash(),
+            request.getHasCarrier(),
+            request.getIsVaccinated()
         );
 
         return PetResponse.builder()
@@ -129,6 +145,10 @@ public class PetService {
             .breed(pet.getBreed().name())
             .size(pet.getSize().name())
             .imageUrl(pet.getImageUrl())
+            .hasMuzzle(pet.isHasMuzzle())
+            .hasLeash(pet.isHasLeash())
+            .hasCarrier(pet.isHasCarrier())
+            .isVaccinated(pet.isVaccinated())
             .build();
         // 수정된 최신 정보를 응답 형태로 만들어서 리턴
     }
