@@ -17,7 +17,7 @@ public class NaverOAuth2UserInfo extends OAuth2UserInfo {
 
     @Override
     public AuthProvider getProvider() {
-        return AuthProvider.GOOGLE;
+        return AuthProvider.NAVER;
     }
 
     @Override

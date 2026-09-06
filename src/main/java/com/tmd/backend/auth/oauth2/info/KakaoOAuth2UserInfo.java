@@ -17,7 +17,7 @@ public class KakaoOAuth2UserInfo extends OAuth2UserInfo {
 
     @Override
     public AuthProvider getProvider() {
-        return AuthProvider.GOOGLE;
+        return AuthProvider.KAKAO;
     }
 
     @Override
