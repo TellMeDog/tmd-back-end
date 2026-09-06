@@ -5,11 +5,12 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class MyReviewSummaryResponse {
+public class MyReviewListResponse {
     private Long reviewId;
     private Long placeId;
     private String placeTitle;
-    private String placeAddr;
-    private String imageUrl;
+    private String placeAddr1;
+    private String placeAddr2;
+    private String imageKey; // Open API 제공 썸네일
     private String markerColor;
 }
