@@ -78,7 +78,10 @@ public class AuthService {
         }
         // 3. 비밀번호 암호화
         String encodedPassword = passwordEncoder.encode(signUpRequest.getPassword());
-        User user = User.createLocal(email, encodedPassword);
+
+        User user = User.createLocal(email, encodedPassword, signUpRequest.getNickname());
+        // [수정] createLocal 호출 시 nickname 전달 추가 (기존: email, encodedPassword만 전달)
+
         userRepository.save(user);
 
         // redisTemplate.delete("signup:" + email);

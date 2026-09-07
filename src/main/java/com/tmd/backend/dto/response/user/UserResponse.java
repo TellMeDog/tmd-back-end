@@ -20,14 +20,18 @@ public class UserResponse {      // Controller가 이 클래스를 써야 하니
     // private이니까 @Getter로 생긴 getId(), getEmail() 등을 통해서만 읽기 가능
     private Long id;
     private String email;
+    private String nickname;  // [수정] 필드 추가: 마이페이지 조회 시 닉네임도 보여주기 위함
     private String provider;
     private LocalDateTime createdAt;
 
     @Builder
-    public UserResponse(Long id, String email, String provider, LocalDateTime createdAt) {      // 이 4개 값을 받아서 UserResponse 객체 하나 만드는 법 정의
+    public UserResponse(Long id, String email, String nickname, String provider, LocalDateTime createdAt) {      // 이 4개 값을 받아서 UserResponse 객체 하나 만드는 법 정의
         // 생성자 안의 대입문 (실제로 서랍에 물건 넣기)
+        // [수정] 매개변수에 nickname 추가
+
         this.id = id; // 매개변수로 받은 값을 클래스의 필드에 실제로 저장하는 코드
         this.email = email;
+        this.nickname = nickname;  // [수정] nickname 대입 추가
         this.provider = provider;
         this.createdAt = createdAt;
     }
