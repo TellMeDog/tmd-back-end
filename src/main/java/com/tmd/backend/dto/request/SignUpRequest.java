@@ -25,10 +25,17 @@ public class SignUpRequest {
     @NotEmpty(message = "비밀번호 확인을 입력해주세요.")
     private String confirmPassword;
 
+    // [수정] 필드 추가: 회원가입 시 사용자가 직접 입력하는 닉네임
+    @NotEmpty(message = "닉네임을 입력해주세요.")
+    @Size(min = 2, max = 20, message = "닉네임은 2~20자로 입력해주세요.")
+    private String nickname;
+
     @Builder
     public SignUpRequest(String email, String password, String confirmPassword){
+        // [수정] 매개변수에 nickname 추가
         this.email=email;
         this.password=password;
         this.confirmPassword=confirmPassword;
+        this.nickname=nickname;  // [수정] nickname 대입 추가
     }
 }
