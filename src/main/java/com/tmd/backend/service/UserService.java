@@ -81,14 +81,15 @@ public class UserService {
     }
 
 
-    // 회원 탈퇴 메서드 추가
+    // 회원 탈퇴 메서드 추가 - 이후에 cascade로 구현한 pet은 주석 처리함
+    // (pet, review는 cascade고 favorite은 여기서 삭제)
     @Transactional
     public void withdraw(String email) {
         User user = userRepository.findByEmail(email)  // email로 탈퇴할 User를 찾음
             .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
 
-        List<Pet> pets = petRepository.findByUserId(user.getId());
-        petRepository.deleteAll(pets);  // 이 사용자가 등록한 반려견들을 먼저 전부 삭제
+//        List<Pet> pets = petRepository.findByUserId(user.getId());
+//        petRepository.deleteAll(pets);  // 이 사용자가 등록한 반려견들을 먼저 전부 삭제
 
         // Pageable.unpaged() = 페이징 없이 전체 다 가져오라는 뜻
         Page<Favorite> favorites = favoriteRepository.findAllByUserId(user.getId(), Pageable.unpaged());
