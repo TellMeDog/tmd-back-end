@@ -10,6 +10,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.tmd.backend.domain.review.Review;  // [수정] Review import 추가
+
 @Entity
 @Table(name = "\"user\"", uniqueConstraints = {
     @UniqueConstraint(columnNames = {"email", "provider"})
@@ -40,7 +42,11 @@ public class User {
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Pet> pets = new ArrayList<>();
+    private List<Pet> pets = new ArrayList<>();  // 회원 탈퇴 시 반려동물도 자동 삭제되도록 Cascade 적용
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Review> reviews = new ArrayList<>();
+    // [추가] 회원 탈퇴 시 작성한 리뷰도 자동 삭제되도록 Cascade 적용
 
     @Builder
     private User(String email, String password, AuthProvider provider, String providerId) {
