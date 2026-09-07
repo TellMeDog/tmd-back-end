@@ -66,6 +66,8 @@ public class UserService {
             .email(user.getEmail())
             // user 객체에서 email 값을 꺼내서 UserResponse의 email 칸에 넣음
 
+            .nickname(user.getNickname())  // [수정] 빌더에 nickname 추가
+
             .provider(user.getProvider().name())
             // user.getProvider()는 Enum 타입(AuthProvider)을 리턴함
             // .name()을 붙여서 그 Enum 값을 문자열로 변환 (예: "LOCAL")

@@ -28,6 +28,9 @@ public class User {
     // OAuth2 유저는 null 허용
     private String password;
 
+    @Column(nullable = false, length = 20)
+    private String nickname;  // [수정] 필드 추가: 로컬 회원가입 시 사용자가 직접 입력하는 닉네임
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private AuthProvider provider;
@@ -43,9 +46,11 @@ public class User {
     private List<Pet> pets = new ArrayList<>();
 
     @Builder
-    private User(String email, String password, AuthProvider provider, String providerId) {
+    private User(String email, String password, AuthProvider provider, String providerId, String nickname) {
+        // [수정] 매개변수에 nickname 추가
         this.email = email;
         this.password = password;
+        this.nickname = nickname;  // [수정] nickname 대입 추가
         this.provider = provider;
         this.providerId = providerId;
     }
@@ -56,10 +61,12 @@ public class User {
     }
 
     // 로컬 회원가입 생성 팩토리 메서드
-    public static User createLocal(String email, String encodedPassword) {
+    public static User createLocal(String email, String encodedPassword, String nickname) {
+        // [수정] 매개변수에 nickname 추가
         return User.builder()
             .email(email)
             .password(encodedPassword)
+            .nickname(nickname)  // [수정] 빌더에 nickname 추가
             .provider(AuthProvider.LOCAL)
             .build();
     }
