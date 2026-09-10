@@ -31,7 +31,14 @@ public class FavoriteController {
                 .markerColor("GREEN")
                 .build()
         );
-        PageResponse<FavoriteResponse> response = new PageResponse<>(dummy, dummy.size(), 1);
+        PageResponse<FavoriteResponse> response = new PageResponse<>(
+            dummy,
+            page,
+            size,
+            dummy.size(),
+            1,
+            false
+        );
 
         return ResponseEntity.ok(SuccessResponseDto.success("즐겨찾기 목록을 조회했습니다.", response));
     }

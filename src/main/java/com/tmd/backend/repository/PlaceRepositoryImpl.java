@@ -5,6 +5,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.tmd.backend.domain.place.Place;
 import com.tmd.backend.domain.place.QPlace;
 import com.tmd.backend.domain.place.QPlacePetInfo;
+import com.tmd.backend.domain.place.QPlacePetPolicy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -18,13 +19,14 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom{
 
     private static final QPlace place = QPlace.place;
     private static final QPlacePetInfo placePetInfo = QPlacePetInfo.placePetInfo;
+    private static final QPlacePetPolicy placePetPolicy = QPlacePetPolicy.placePetPolicy;
 
     @Override
     public List<Place> findPlacesWithCategory(double swLat, double swLng, double neLat, double neLng,
                                               String lclsSystm1, String lclsSystm2, String lclsSystm3) {
         return jpaQueryFactory
             .selectFrom(place)
-            .leftJoin(place.placePetInfo, placePetInfo).fetchJoin()
+            .leftJoin(place.placePetPolicy, placePetPolicy).fetchJoin()
             .where(
                 place.mapX.between(swLng, neLng),
                 place.mapY.between(swLat, neLat),
@@ -39,9 +41,7 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom{
         return jpaQueryFactory
             .selectFrom(place)
             .leftJoin(place.placePetInfo, placePetInfo).fetchJoin()
-            .where(
-                place.addr1.contains(keyword).or(place.addr2.contains(keyword)).or(place.title.contains(keyword))
-            )
+            .where(place.title.contains(keyword))
             .fetch();
     }
 

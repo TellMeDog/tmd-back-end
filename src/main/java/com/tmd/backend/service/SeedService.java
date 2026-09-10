@@ -8,8 +8,8 @@ import com.tmd.backend.domain.place.PlacePetInfo;
 import com.tmd.backend.domain.place.PlacePetPolicy;
 import com.tmd.backend.external.TourApiClient;
 import com.tmd.backend.external.TourApiPetInfoItem;
-import com.tmd.backend.repository.PetPolicyRepository;
 import com.tmd.backend.repository.PlacePetInfoRepository;
+import com.tmd.backend.repository.PlacePetPolicyRepository;
 import com.tmd.backend.repository.PlaceRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +29,7 @@ public class SeedService {
     private final PlaceRepository placeRepository;
     private final PetPolicyAnalyzer petPolicyAnalyzer;
     private final PlacePetInfoRepository placePetInfoRepository;
-    private final PetPolicyRepository petPolicyRepository;
+    private final PlacePetPolicyRepository placePetPolicyRepository;
 
     private static final int ANALYSIS_BATCH_SIZE = 1;
     private static final int DAILY_API_LIMIT = 500;
@@ -196,7 +196,7 @@ public class SeedService {
                     .toList();
 
                 // 6. 검증이 모두 끝난 후 저장
-                petPolicyRepository.saveAll(policies);
+                placePetPolicyRepository.saveAll(policies);
 
                 totalProcessed += policies.size();
 

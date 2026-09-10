@@ -5,6 +5,7 @@ import com.tmd.backend.ai.PetPolicyAnalysis;
 import com.tmd.backend.ai.WeightLimitType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -20,49 +21,66 @@ public class PlacePetPolicy {
     @JoinColumn(name = "place_id", nullable = false)
     private Place place;
 
-    private Boolean petAllowed;
+    @Enumerated(EnumType.STRING)
+    private AccessScope accessScope;
+
     private Boolean allBreedsAllowed;
     private Boolean dangerousBreedAllowed;
-    private Boolean dangerousBreedMuzzleRequired;
+    private Boolean dangerousBreedAllowedCondition;
 
     private Double maxWeightKg;
+
     @Enumerated(EnumType.STRING)
     private WeightLimitType weightLimitType;
 
     private Boolean leashRequired;
     private Boolean muzzleRequired;
     private Boolean kennelRequired;
-    private Boolean strollerAllowed;
     private Boolean vaccinationRequired;
     private Boolean advanceInquiryRequired;
     private Integer maxPetCount;
 
-    @Enumerated(EnumType.STRING)
-    private AccessScope accessScope;
     private String accessAreaDescription;
 
     @Column(columnDefinition = "TEXT")
     private String exceptions;
 
+    @Builder
+    private PlacePetPolicy(Place place, AccessScope accessScope, Boolean allBreedsAllowed, Boolean dangerousBreedAllowed, Boolean dangerousBreedAllowedCondition, Double maxWeightKg, WeightLimitType weightLimitType, Boolean leashRequired, Boolean muzzleRequired, Boolean kennelRequired, Boolean vaccinationRequired, Boolean advanceInquiryRequired, Integer maxPetCount, String accessAreaDescription, String exceptions) {
+        this.place = place;
+        this.accessScope = accessScope;
+        this.allBreedsAllowed = allBreedsAllowed;
+        this.dangerousBreedAllowed = dangerousBreedAllowed;
+        this.dangerousBreedAllowedCondition = dangerousBreedAllowedCondition;
+        this.maxWeightKg = maxWeightKg;
+        this.weightLimitType = weightLimitType;
+        this.leashRequired = leashRequired;
+        this.muzzleRequired = muzzleRequired;
+        this.kennelRequired = kennelRequired;
+        this.vaccinationRequired = vaccinationRequired;
+        this.advanceInquiryRequired = advanceInquiryRequired;
+        this.maxPetCount = maxPetCount;
+        this.accessAreaDescription = accessAreaDescription;
+        this.exceptions = exceptions;
+    }
+
     public static PlacePetPolicy from(Place place, PetPolicyAnalysis analysis) {
-        PlacePetPolicy p = new PlacePetPolicy();
-        p.place = place;
-        p.petAllowed = analysis.petAllowed();
-        p.allBreedsAllowed = analysis.allBreedsAllowed();
-        p.dangerousBreedAllowed = analysis.dangerousBreedAllowed();
-        p.dangerousBreedMuzzleRequired = analysis.dangerousBreedMuzzleRequired();
-        p.maxWeightKg = analysis.maxWeightKg();
-        p.weightLimitType = analysis.weightLimitType();
-        p.leashRequired = analysis.leashRequired();
-        p.muzzleRequired = analysis.muzzleRequired();
-        p.kennelRequired = analysis.kennelRequired();
-        p.strollerAllowed = analysis.strollerAllowed();
-        p.vaccinationRequired = analysis.vaccinationRequired();
-        p.advanceInquiryRequired = analysis.advanceInquiryRequired();
-        p.maxPetCount = analysis.maxPetCount();
-        p.accessScope = analysis.accessScope();
-        p.accessAreaDescription = analysis.accessAreaDescription();
-        p.exceptions = analysis.exceptions();
-        return p;
+        return PlacePetPolicy.builder()
+            .place(place)
+            .accessScope(analysis.accessScope())
+            .allBreedsAllowed(analysis.allBreedsAllowed())
+            .dangerousBreedAllowed(analysis.dangerousBreedAllowed())
+            .dangerousBreedAllowedCondition(analysis.dangerousBreedAllowedCondition())
+            .maxWeightKg(analysis.maxWeightKg())
+            .weightLimitType(analysis.weightLimitType())
+            .leashRequired(analysis.leashRequired())
+            .muzzleRequired(analysis.muzzleRequired())
+            .kennelRequired(analysis.kennelRequired())
+            .vaccinationRequired(analysis.vaccinationRequired())
+            .advanceInquiryRequired(analysis.advanceInquiryRequired())
+            .maxPetCount(analysis.maxPetCount())
+            .accessAreaDescription(analysis.accessAreaDescription())
+            .exceptions(analysis.exceptions())
+            .build();
     }
 }

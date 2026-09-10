@@ -9,6 +9,8 @@ import com.tmd.backend.domain.review.Review;
 import com.tmd.backend.domain.user.User;
 import com.tmd.backend.dto.request.review.ReviewCreateRequest;
 import com.tmd.backend.dto.request.review.ReviewUpdateRequest;
+import com.tmd.backend.dto.response.PageResponse;
+import com.tmd.backend.dto.response.review.ReviewDetailResponse;
 import com.tmd.backend.exception.BaseException;
 import com.tmd.backend.repository.PetRepository;
 import com.tmd.backend.repository.PlaceRepository;
@@ -18,10 +20,14 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -75,13 +81,14 @@ class ReviewServiceTest {
 
         given(userRepository.findByEmail("test@email.com")).willReturn(Optional.of(mock(User.class)));
         given(placeRepository.findById(1L)).willReturn(Optional.of(mock(Place.class)));
-        given(petRepository.findById(10L)).willReturn(Optional.of(mock(Pet.class)));
+        given(petRepository.findByIdAndUserEmail(10L, "test@email.com"))
+            .willReturn(Optional.of(mock(Pet.class)));
         Cache mockCache = mock(Cache.class);
         given(cacheManager.getCache(any())).willReturn(mockCache);
 
         reviewService.createReview("test@email.com", 1L, request);
 
-        verify(petRepository).findById(10L);
+        verify(petRepository).findByIdAndUserEmail(10L, "test@email.com");
         verify(reviewRepository).save(any(Review.class));
     }
 
@@ -212,5 +219,53 @@ class ReviewServiceTest {
         double result = reviewService.getAverageRating(1L);
 
         assertThat(result).isEqualTo(4.2);
+    }
+
+    @Test
+    @DisplayName("평점순 리뷰 페이지는 안정적인 보조 정렬과 페이지 정보를 사용한다")
+    void getPlaceReviewList_평점순정렬과페이지정보() {
+        given(reviewRepository.findByPlaceIdExcludingUser(anyLong(), anyString(), any(Pageable.class)))
+            .willReturn(new PageImpl<>(List.of(), PageRequest.of(1, 2), 3));
+
+        PageResponse<ReviewDetailResponse> result = reviewService.getPlaceReviewList(
+            1L,
+            "test@email.com",
+            1,
+            2,
+            "rating"
+        );
+
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+        verify(reviewRepository).findByPlaceIdExcludingUser(
+            eq(1L),
+            eq("test@email.com"),
+            pageableCaptor.capture()
+        );
+
+        Pageable pageable = pageableCaptor.getValue();
+        assertThat(pageable.getSort().getOrderFor("rating").isDescending()).isTrue();
+        assertThat(pageable.getSort().getOrderFor("createdAt").isDescending()).isTrue();
+        assertThat(pageable.getSort().getOrderFor("id").isDescending()).isTrue();
+        assertThat(result.getPage()).isEqualTo(1);
+        assertThat(result.getSize()).isEqualTo(2);
+        assertThat(result.getTotalElements()).isEqualTo(3);
+        assertThat(result.isHasNext()).isFalse();
+    }
+
+    @Test
+    @DisplayName("리뷰 페이지 크기는 1부터 100까지만 허용한다")
+    void getPlaceReviewList_페이지크기검증() {
+        assertThatThrownBy(() -> reviewService.getPlaceReviewList(
+            1L,
+            "test@email.com",
+            0,
+            101,
+            "latest"
+        ))
+            .isInstanceOf(BaseException.class)
+            .satisfies(e -> assertThat(((BaseException) e).getErrorCode())
+                .isEqualTo(ErrorCode.VALIDATION_ERROR));
+
+        verifyNoInteractions(reviewRepository);
     }
 }

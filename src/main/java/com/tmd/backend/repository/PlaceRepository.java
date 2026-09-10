@@ -8,5 +8,6 @@ import java.util.Optional;
 
 public interface PlaceRepository extends JpaRepository<Place, Long>, PlaceRepositoryCustom {
     Optional<Place> findByContentId(String contentId);
+    List<Place> findByTitleContaining(String keyword);
     List<Place> findTop100ByIdGreaterThanOrderByIdAsc(Long lastId);
 }
