@@ -20,13 +20,9 @@ import com.tmd.backend.dto.request.pet.PetUpdateRequest;   // 반려견 수정 �
 import java.util.List;
 
 @Slf4j  // 로그(log.info 등) 찍을 수 있게 해줌
-
 @RequiredArgsConstructor  // final 필드(petRepository, userRepository)를 자동으로 생성자 주입해줌
-
 @Transactional(readOnly = true)  // 이 클래스의 메서드들은 기본적으로 DB를 읽기만 함 (조회 전용)
-
 @Service  // 이 클래스가 Service 계층임을 Spring에게 알림
-
 public class PetService {
 
     private final PetRepository petRepository;
@@ -51,15 +47,19 @@ public class PetService {
             .map(pet -> PetResponse.builder()
                 .petId(pet.getId())
                 .name(pet.getName())
-                .breed(pet.getBreed().name())  // ← .name() 추가: Enum 값을 문자열로 바꿔주는 기능
-                .size(pet.getSize().name())  // ← .name() 추가: Enum 값을 문자열로 바꿔주는 기능
+                .breed(pet.getBreed())
+                // [수정] .breed(pet.getBreed().name()) → .breed(pet.getBreed())
+                //        breed가 이제 String이라 .name() 호출(Enum→문자열 변환) 불필요
+                .size(pet.getSize())
+                // [수정] .size(pet.getSize().name()) → .size(pet.getSize())
+                //        size가 이제 Double이라 .name() 호출 불필요
                 .imageUrl(pet.getImageUrl())
                 .hasMuzzle(pet.isHasMuzzle())
                 .hasLeash(pet.isHasLeash())
                 .hasCarrier(pet.isHasCarrier())
-                .isVaccinated(pet.isVaccinated())
+                // [수정] .isVaccinated(pet.isVaccinated()) 줄 제거
                 .build())
-            // Pet(원본, DB 그대로의 형태) 하나하나를 PetResponse(응답용, 프론트에 보여줄 형태)로 변환
+                // Pet(원본, DB 그대로의 형태) 하나하나를 PetResponse(응답용, 프론트에 보여줄 형태)로 변환
 
             .toList();  // 변환된 PetResponse들을 다시 리스트로 모아서 리턴
     }
@@ -67,7 +67,6 @@ public class PetService {
     // 반려견 - 반려견 추가를 위해 아래 메서드 추가
     // 아래 메서드는 쓰기(등록) 작업이라, 클래스 기본값(readOnly=true)을 무시하고 이 메서드에만 별도로 쓰기 가능한 트랜잭션을 적용함
     @Transactional
-
     // email(로그인한 사람)과 requests(등록하려는 반려견 정보 리스트)를 받아서 등록 완료된 반려견들의 정보(PetResponse 리스트)를 리턴하는 메서드
     public List<PetResponse> registerPets(String email, List<PetRegisterRequest> requests) {
         User user = userRepository.findByEmail(email) // email로 User를 찾음. 이 반려견들의 주인을 알아내기 위함
@@ -83,7 +82,7 @@ public class PetService {
                 .hasMuzzle(req.isHasMuzzle())
                 .hasLeash(req.isHasLeash())
                 .hasCarrier(req.isHasCarrier())
-                .isVaccinated(req.isVaccinated())
+                // [수정] .isVaccinated(req.isVaccinated()) 줄 제거
                 .build()) // 위 값들로 Pet 객체 하나를 완성 (아직 DB엔 저장 안 된 상태, 메모리 상에서만 만들어진 상태)
             .toList(); // req(요청) 하나하나를 Pet 객체로 바꾼 결과들을 리스트로 모음
 
@@ -97,13 +96,13 @@ public class PetService {
             .map(pet -> PetResponse.builder()
                 .petId(pet.getId()) // DB가 방금 매겨준 진짜 id 값
                 .name(pet.getName())
-                .breed(pet.getBreed().name())  // ← .name() 추가
-                .size(pet.getSize().name())  // ← .name() 추가
+                .breed(pet.getBreed())  // [수정] .name() 호출 제거
+                .size(pet.getSize())  // [수정] .name() 호출 제거
                 .imageUrl(pet.getImageUrl())
                 .hasMuzzle(pet.isHasMuzzle())
                 .hasLeash(pet.isHasLeash())
                 .hasCarrier(pet.isHasCarrier())
-                .isVaccinated(pet.isVaccinated())
+                // [수정] isVaccinated 줄 제거
                 .build()) // 저장된 Pet(원본 Entity)을 PetResponse(응답용 DTO)로 변환
 
             .toList(); // 변환된 것들을 다시 리스트로 모아서 최종 리턴
@@ -135,23 +134,25 @@ public class PetService {
             request.getImageUrl(),
             request.getHasMuzzle(),
             request.getHasLeash(),
-            request.getHasCarrier(),
-            request.getIsVaccinated()
+            request.getHasCarrier()
+            // [수정] request.getIsVaccinated() 인자 제거
+            //        (Pet.update() 메서드 자체도 매개변수에서 isVaccinated 제거했으므로 맞춰야 함)
         );
 
         return PetResponse.builder()
             .petId(pet.getId())
             .name(pet.getName())
-            .breed(pet.getBreed().name())
-            .size(pet.getSize().name())
+            .breed(pet.getBreed())  // [수정] .name() 호출 제거
+            .size(pet.getSize())  // [수정] .name() 호출 제거
             .imageUrl(pet.getImageUrl())
             .hasMuzzle(pet.isHasMuzzle())
             .hasLeash(pet.isHasLeash())
             .hasCarrier(pet.isHasCarrier())
-            .isVaccinated(pet.isVaccinated())
+            // [수정] isVaccinated 줄 제거
             .build();
-        // 수정된 최신 정보를 응답 형태로 만들어서 리턴
     }
+        // 수정된 최신 정보를 응답 형태로 만들어서 리턴
+
 
     // 반려견 - 반려견 삭제를 위해 아래 메서드 추가
     @Transactional

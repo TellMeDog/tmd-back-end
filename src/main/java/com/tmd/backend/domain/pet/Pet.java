@@ -16,26 +16,26 @@ public class Pet {
 
     private String name;
 
-    @Enumerated(value = EnumType.STRING)
-    private PetBreed breed;
+    private String breed;  // [수정] PetBreed(Enum) → String으로 변경
 
-    @Enumerated(value = EnumType.STRING)
-    private PetSize size;
+    private Double size;  // [수정] PetSize(Enum) → Double로 변경
 
     private String imageUrl;
 
     private boolean hasMuzzle;      // 입마개 유무 추가
     private boolean hasLeash;        // 목줄 유무 추가
     private boolean hasCarrier;       // 이동장 유무 추가
-    private boolean isVaccinated;      // 예방접종 유무 추가
+    // [수정] isVaccinated 필드 제거 (예방접종 유무)
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="user_id")
     private User user;
 
     @Builder
-    public Pet(User user, String name, PetBreed breed, PetSize size, String imageUrl,
-               boolean hasMuzzle, boolean hasLeash, boolean hasCarrier, boolean isVaccinated) {
+    public Pet(User user, String name, String breed, Double size, String imageUrl,
+                      boolean hasMuzzle, boolean hasLeash, boolean hasCarrier) {
+        // [수정] 매개변수: PetBreed→String, PetSize→Double, isVaccinated 매개변수 제거
+
         this.user = user;
         this.name = name;
         this.breed = breed;
@@ -44,11 +44,11 @@ public class Pet {
         this.hasMuzzle = hasMuzzle;
         this.hasLeash = hasLeash;
         this.hasCarrier = hasCarrier;
-        this.isVaccinated = isVaccinated;
     }
 
-    public static Pet create(User user, String name, PetBreed breed, PetSize size, String imageUrl,
-                             boolean hasMuzzle, boolean hasLeash, boolean hasCarrier, boolean isVaccinated) {
+    public static Pet create(User user, String name, String breed, Double size, String imageUrl,
+                             boolean hasMuzzle, boolean hasLeash, boolean hasCarrier) {
+        // [수정] 매개변수: PetBreed→String, PetSize→Double, isVaccinated 매개변수 제거
         return Pet.builder()
             .user(user)
             .name(name)
@@ -58,12 +58,13 @@ public class Pet {
             .hasMuzzle(hasMuzzle)
             .hasLeash(hasLeash)
             .hasCarrier(hasCarrier)
-            .isVaccinated(isVaccinated)
             .build();
     }
 
     // 반려견 수정(update) 메서드 추가
-    public void update(String name, PetBreed breed, PetSize size, String imageUrl, Boolean hasMuzzle, Boolean hasLeash, Boolean hasCarrier, Boolean isVaccinated) {
+    public void update(String name, String breed, Double size, String imageUrl,
+                       Boolean hasMuzzle, Boolean hasLeash, Boolean hasCarrier) {
+        // [수정] 매개변수: PetBreed→String, PetSize→Double, isVaccinated 매개변수 제거
         // "이 반려견의 정보를 바꿔달라"는 요청을 받는 메서드
         // 매개변수로 새 값들을 받음 (일부는 null일 수 있음)
 
@@ -77,6 +78,5 @@ public class Pet {
         if (hasMuzzle != null) this.hasMuzzle = hasMuzzle;
         if (hasLeash != null) this.hasLeash = hasLeash;
         if (hasCarrier != null) this.hasCarrier = hasCarrier;
-        if (isVaccinated != null) this.isVaccinated = isVaccinated;
     }
 }
