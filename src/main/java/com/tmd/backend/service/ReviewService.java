@@ -1,6 +1,7 @@
 package com.tmd.backend.service;
 
 import com.tmd.backend.common.ErrorCode;
+import com.tmd.backend.domain.image.ImageUsage;
 import com.tmd.backend.domain.pet.Pet;
 import com.tmd.backend.domain.pet.PetBreed;
 import com.tmd.backend.domain.place.Place;
@@ -44,6 +45,7 @@ public class ReviewService {
     private final PetRepository petRepository;
     private final ReviewRepository reviewRepository;
     private final CacheManager cacheManager;
+    private final ImageService imageService;
 
     @Transactional
     public void createReview(String email, Long placeId, ReviewCreateRequest request) {
@@ -58,6 +60,9 @@ public class ReviewService {
                 .orElseThrow(() -> new BaseException(ErrorCode.FORBIDDEN))
             : null;
 
+        String imageKey = imageService.attachReadyUpload(
+            email, request.getImageUploadId(), ImageUsage.REVIEW);
+
         reviewRepository.save(Review.create(
             user, place, pet,
             request.getFeedbackType(),
@@ -65,7 +70,7 @@ public class ReviewService {
             request.getEtcReasons(),
             request.getRating(),
             request.getContent(),
-            request.getImageKey()
+            imageKey
         ));
         evictPlaceCache(placeId);
     }
@@ -78,13 +83,27 @@ public class ReviewService {
             .orElseThrow(() -> new BaseException(ErrorCode.REVIEW_NOT_FOUND));
         Long placeId = review.getPlace().getId();
 
+        if (request.isRemoveImage() && request.getImageUploadId() != null) {
+            throw new BaseException(ErrorCode.INVALID_IMAGE_UPLOAD);
+        }
+        String previousImageKey = review.getImageKey();
+        String imageKey = previousImageKey;
+        if (request.getImageUploadId() != null) {
+            imageKey = imageService.attachReadyUpload(
+                email, request.getImageUploadId(), ImageUsage.REVIEW);
+            imageService.markForDeletion(previousImageKey);
+        } else if (request.isRemoveImage()) {
+            imageKey = null;
+            imageService.markForDeletion(previousImageKey);
+        }
+
         review.update(
             request.getFeedbackType(),
             request.getMismatchReasons(),
             request.getEtcReason(),
             request.getRating(),
             request.getContent(),
-            request.getImageKey()
+            imageKey
         );
         evictPlaceCache(placeId);
     }
@@ -94,6 +113,7 @@ public class ReviewService {
         Review review = reviewRepository.findByIdAndUserEmail(reviewId, email)
             .orElseThrow(() -> new BaseException(ErrorCode.REVIEW_NOT_FOUND));
         Long placeId = review.getPlace().getId();
+        imageService.markForDeletion(review.getImageKey());
         reviewRepository.delete(review);
         evictPlaceCache(placeId);
     }
@@ -208,7 +228,7 @@ public class ReviewService {
             .etcReason(review.getEtcReason())
             .rating(review.getRating())
             .content(review.getContent())
-            .imageKey(review.getImageKey())
+            .imageUrl(imageService.toPublicUrl(review.getImageKey()))
             .createdAt(review.getCreatedAt().toString())
             .build();
     }

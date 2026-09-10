@@ -1,9 +1,10 @@
 package com.tmd.backend.dto.request.pet;
 
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.util.UUID;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -12,5 +13,6 @@ public class PetUpdateRequest {
     private String name;
     private String breed;
     private String size;
-    private String imageUrl;
+    private UUID imageUploadId;
+    private boolean removeImage;
 }

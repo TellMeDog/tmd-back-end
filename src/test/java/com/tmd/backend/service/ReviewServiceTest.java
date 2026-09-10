@@ -46,6 +46,7 @@ class ReviewServiceTest {
     @Mock PetRepository petRepository;
     @Mock ReviewRepository reviewRepository;
     @Mock CacheManager cacheManager;
+    @Mock ImageService imageService;
 
     @InjectMocks ReviewService reviewService;
 

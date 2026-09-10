@@ -22,28 +22,36 @@ public class Pet {
     @Enumerated(value = EnumType.STRING)
     private PetSize size;
 
-    private String imageUrl;
+    @Column(name = "image_url")
+    private String imageKey;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="user_id")
     private User user;
 
     @Builder
-    public Pet(User user, String name, PetBreed breed, PetSize size, String imageUrl) {
+    public Pet(User user, String name, PetBreed breed, PetSize size, String imageKey) {
         this.user = user;
         this.name = name;
         this.breed = breed;
         this.size = size;
-        this.imageUrl = imageUrl;
+        this.imageKey = imageKey;
     }
 
-    public static Pet create(User user, String name, PetBreed breed, PetSize size, String imageUrl) {
+    public static Pet create(User user, String name, PetBreed breed, PetSize size, String imageKey) {
         return Pet.builder()
             .user(user)
             .name(name)
             .breed(breed)
             .size(size)
-            .imageUrl(imageUrl)
+            .imageKey(imageKey)
             .build();
+    }
+
+    public void update(String name, PetBreed breed, PetSize size, String imageKey) {
+        if (name != null) this.name = name;
+        if (breed != null) this.breed = breed;
+        if (size != null) this.size = size;
+        this.imageKey = imageKey;
     }
 }

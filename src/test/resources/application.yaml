@@ -21,3 +21,11 @@ spring:
         max-tokens: 2048
     model:
       embedding: none
+
+cloudflare:
+  r2:
+    endpoint: https://test-account.r2.cloudflarestorage.com
+    access-key: test-access-key
+    secret-key: test-secret-key
+    bucket: test-bucket
+    public-url: https://images.example.com

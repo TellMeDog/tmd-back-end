@@ -20,6 +20,6 @@ public class ReviewDetailResponse {
     private String etcReason;
     private int rating;
     private String content;
-    private String imageKey;
+    private String imageUrl;
     private String createdAt;
 }
