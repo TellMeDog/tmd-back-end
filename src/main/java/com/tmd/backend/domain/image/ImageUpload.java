@@ -35,7 +35,7 @@ public class ImageUpload {
     private User user;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(name = "image_usage", nullable = false, length = 20)
     private ImageUsage usage;
 
     @Enumerated(EnumType.STRING)
