@@ -36,17 +36,11 @@ public class PlacePetPolicy {
     private Boolean leashRequired;
     private Boolean muzzleRequired;
     private Boolean kennelRequired;
-    private Boolean vaccinationRequired;
     private Boolean advanceInquiryRequired;
     private Integer maxPetCount;
 
-    private String accessAreaDescription;
-
-    @Column(columnDefinition = "TEXT")
-    private String exceptions;
-
     @Builder
-    private PlacePetPolicy(Place place, AccessScope accessScope, Boolean allBreedsAllowed, Boolean dangerousBreedAllowed, Boolean dangerousBreedAllowedCondition, Double maxWeightKg, WeightLimitType weightLimitType, Boolean leashRequired, Boolean muzzleRequired, Boolean kennelRequired, Boolean vaccinationRequired, Boolean advanceInquiryRequired, Integer maxPetCount, String accessAreaDescription, String exceptions) {
+    private PlacePetPolicy(Place place, AccessScope accessScope, Boolean allBreedsAllowed, Boolean dangerousBreedAllowed, Boolean dangerousBreedAllowedCondition, Double maxWeightKg, WeightLimitType weightLimitType, Boolean leashRequired, Boolean muzzleRequired, Boolean kennelRequired, Boolean advanceInquiryRequired, Integer maxPetCount) {
         this.place = place;
         this.accessScope = accessScope;
         this.allBreedsAllowed = allBreedsAllowed;
@@ -57,11 +51,8 @@ public class PlacePetPolicy {
         this.leashRequired = leashRequired;
         this.muzzleRequired = muzzleRequired;
         this.kennelRequired = kennelRequired;
-        this.vaccinationRequired = vaccinationRequired;
         this.advanceInquiryRequired = advanceInquiryRequired;
         this.maxPetCount = maxPetCount;
-        this.accessAreaDescription = accessAreaDescription;
-        this.exceptions = exceptions;
     }
 
     public static PlacePetPolicy from(Place place, PetPolicyAnalysis analysis) {
@@ -76,11 +67,8 @@ public class PlacePetPolicy {
             .leashRequired(analysis.leashRequired())
             .muzzleRequired(analysis.muzzleRequired())
             .kennelRequired(analysis.kennelRequired())
-            .vaccinationRequired(analysis.vaccinationRequired())
             .advanceInquiryRequired(analysis.advanceInquiryRequired())
             .maxPetCount(analysis.maxPetCount())
-            .accessAreaDescription(analysis.accessAreaDescription())
-            .exceptions(analysis.exceptions())
             .build();
     }
 }
