@@ -40,3 +40,6 @@ logs/
 
 # Docker 볼륨 데이터
 /data/
+
+# MD 파일
+/*.md
