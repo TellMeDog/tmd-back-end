@@ -80,12 +80,12 @@ public class PetService {
 
     private PetResponse toResponse(Pet pet) {
         return PetResponse.builder()
-            .petId(pet.getId()).name(pet.getName()).breed(pet.getBreed().name())
+            .petId(pet.getId()).name(pet.getName()).breed(pet.getBreed().getKoreanName())
             .size(pet.getSize().name()).imageUrl(imageService.toPublicUrl(pet.getImageKey())).build();
     }
 
     private PetBreed parseBreed(String value) {
-        try { return PetBreed.valueOf(value); }
+        try { return PetBreed.fromKoreanName(value); }
         catch (IllegalArgumentException | NullPointerException e) {
             throw new BaseException(ErrorCode.VALIDATION_ERROR);
         }

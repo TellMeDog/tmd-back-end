@@ -182,7 +182,7 @@ public class ReviewService {
         List<String> topBreeds = reviewRepository
             .findTopBreedsByPlaceId(placeId, PageRequest.of(0, 3))
             .stream()
-            .map(row -> ((PetBreed) row[0]).name())
+            .map(row -> ((PetBreed) row[0]).getKoreanName())
             .toList();
 
         return PlaceDetailResponse.VisitStats.builder()
