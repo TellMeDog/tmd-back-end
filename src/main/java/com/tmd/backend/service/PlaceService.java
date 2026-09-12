@@ -34,7 +34,7 @@ public class PlaceService {
     private final PetRepository petRepository;
     private final MarkerColorService markerColorService;
     private final ReviewService reviewService;
-
+    private final FavoriteService favoriteService;
     // Key Enum으로 할지 고려
     private static final Map<String, List<CategoryCode>> CATEGORY_MAP = Map.of(
         "카페", List.of(new CategoryCode("FD", "FD05", null)),
@@ -96,7 +96,7 @@ public class PlaceService {
             ))
             .values()
             .stream()
-            .map(place -> toMarkerResponse(place, pet, currMapX, currMapY))
+            .map(place -> toMarkerResponse(email, place, pet, currMapX, currMapY))
             .sorted(Comparator
                 .comparingLong(PlaceMarkerResponse::getDistance)
                 .thenComparing(PlaceMarkerResponse::getPlaceId))
@@ -115,7 +115,7 @@ public class PlaceService {
             .orElseThrow(() -> new BaseException(ErrorCode.NOT_OWNER_OF_DOG));
 
         return placeRepository.findPlacesWithKeyword(trimmedKeyword).stream()
-            .map(place -> toMarkerResponse(place, pet, currMapX, currMapY))
+            .map(place -> toMarkerResponse(email, place, pet, currMapX, currMapY))
             .sorted(Comparator
                 .comparingLong(PlaceMarkerResponse::getDistance) // 거리순 정렬
                 .thenComparing(PlaceMarkerResponse::getPlaceId)) // 거리가 같다면 id로 정렬
@@ -133,7 +133,7 @@ public class PlaceService {
         String lDongSignguCd = regionDetail.getCode();
 
         return placeRepository.findPlacesByRegion(lDongRegnCd, lDongSignguCd).stream()
-            .map(place -> toMarkerResponse(place, pet, currMapX, currMapY))
+            .map(place -> toMarkerResponse(email, place, pet, currMapX, currMapY))
             .toList();
     }
 
@@ -172,7 +172,7 @@ public class PlaceService {
         PlaceDetailResponse.VisitStats visitStats = reviewService.getVisitStats(placeId);
 
         return PlaceDetailResponse.builder()
-            .placeMarkerResponse(toMarkerResponse(place, pet, currMapX, currMapY))
+            .placeMarkerResponse(toMarkerResponse(email, place, pet, currMapX, currMapY))
             .zipCode(place.getZipCode())
             .addr1(place.getAddr1())
             .addr2(place.getAddr2())
@@ -185,9 +185,10 @@ public class PlaceService {
             .build();
     }
 
-    private PlaceMarkerResponse toMarkerResponse(Place place, Pet pet, double currMapX, double currMapY) {
+    private PlaceMarkerResponse toMarkerResponse(String email, Place place, Pet pet, double currMapX, double currMapY) {
         String color = markerColorService.calculateMarkerColor(place.getPlacePetPolicy(), pet);
         long distance = calculateDistance(currMapY, currMapX, place.getMapY(), place.getMapX());
+        boolean isFavorite = favoriteService.isFavorite(email, place.getId());
         return PlaceMarkerResponse.builder()
             .placeId(place.getId())
             .title(place.getTitle())
@@ -195,7 +196,7 @@ public class PlaceService {
             .mapX(place.getMapX())
             .mapY(place.getMapY())
             .distance(distance)
-            .isFavorite(true) // TODO: 즐겨찾기 로직 후 변경
+            .isFavorite(isFavorite) // TODO: 즐겨찾기 로직 후 변경
             .markerColor(color)
             .averageRating(reviewService.getAverageRating(place.getId()))
             .build();

@@ -62,7 +62,6 @@ public class FavoriteService {
         );
     }
 
-
     public boolean isFavorite(String email, Long placeId) {
         User user = findUser(email);
         return favoriteRepository.existsByUserIdAndPlaceId(user.getId(), placeId);
