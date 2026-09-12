@@ -23,6 +23,7 @@ public class PlacePetInfo {
     private String acmpyTypeCd; // 동반유형코드(동반구분) ex. 전구역 동반가능
     private String acmpyPsblCpam; // 동반가능동물 ex. 전 견종 출입 가능 (맹견의 경우, 입마개 착용 필수)
     private String acmpyNeedMtr; // 동반시 필요사항 ex. 목줄 착용
+    @Column(columnDefinition = "TEXT")
     private String relaAcdntRiskMtr; // 관련 사고 대비 사항
     private String relaPosesFclty; // 관련 구비 시설
     private String relaFrnshPrdlst; // 관련 비치 품목
