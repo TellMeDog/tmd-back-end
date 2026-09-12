@@ -137,8 +137,8 @@ class ReviewRepositoryTest {
     @Test
     @DisplayName("방문 견종을 리뷰 수가 많은 순서로 제한 조회")
     void findTopBreedsByPlaceId_상위견종조회() {
-        Pet mock1 = em.persist(Pet.create(user, "첫째", PetBreed.Mock1, PetSize.SMALL, null));
-        Pet mock2 = em.persist(Pet.create(user, "둘째", PetBreed.Mock2, PetSize.SMALL, null));
+        Pet mock1 = em.persist(Pet.create(user, "첫째", PetBreed.SHIBA_INU, PetSize.SMALL, null));
+        Pet mock2 = em.persist(Pet.create(user, "둘째", PetBreed.BEAGLE, PetSize.SMALL, null));
         em.persist(Review.create(user, place, mock1, FeedbackType.ENTERED, null, null, 5, null, null));
         em.persist(Review.create(user, place, mock1, FeedbackType.ENTERED, null, null, 4, null, null));
         em.persist(Review.create(user, place, mock2, FeedbackType.ENTERED, null, null, 3, null, null));
@@ -150,7 +150,7 @@ class ReviewRepositoryTest {
         );
 
         assertThat(result).hasSize(1);
-        assertThat(result.getFirst()[0]).isEqualTo(PetBreed.Mock1);
+        assertThat(result.getFirst()[0]).isEqualTo(PetBreed.SHIBA_INU);
         assertThat(result.getFirst()[1]).isEqualTo(2L);
     }
 
