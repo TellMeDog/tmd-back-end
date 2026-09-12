@@ -11,15 +11,23 @@ public class PetResponse {
     private Long petId;
     private String name;
     private String breed;
-    private String size;
+    private Double weight;
     private String imageUrl;
 
+    private boolean hasMuzzle;
+    private boolean hasLeash;
+    private boolean hasCarrier;
+
     @Builder
-    public PetResponse(Long petId, String name, String breed, String size, String imageUrl) {
-        this.petId=petId;
+    public PetResponse(Long petId, String name, String breed, Double weight, String imageUrl,
+                       boolean hasMuzzle, boolean hasLeash, boolean hasCarrier) {
+        this.petId = petId;
         this.name = name;
         this.breed = breed;
-        this.size=size;
-        this.imageUrl=imageUrl;
+        this.weight = weight;
+        this.imageUrl = imageUrl;
+        this.hasMuzzle = hasMuzzle;
+        this.hasLeash = hasLeash;
+        this.hasCarrier = hasCarrier;
     }
 }

@@ -43,6 +43,7 @@ public enum ErrorCode {
     PET_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 반려견입니다."),
     PLACE_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 장소입니다."),
     REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 리뷰입니다."),
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 사용자입니다."), //UserService 구현 시 이메일을 못 찾을 상황 처리를 위해 추가한 코드
     IMAGE_UPLOAD_NOT_FOUND(HttpStatus.NOT_FOUND, "이미지 업로드를 찾을 수 없습니다."),
 
     //409

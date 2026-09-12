@@ -6,6 +6,7 @@ import com.tmd.backend.domain.pet.Pet;
 import com.tmd.backend.domain.pet.PetBreed;
 import com.tmd.backend.domain.user.User;
 import com.tmd.backend.dto.request.pet.PetRegisterRequest;
+import com.tmd.backend.dto.request.pet.PetUpdateRequest;
 import com.tmd.backend.exception.BaseException;
 import com.tmd.backend.repository.PetRepository;
 import com.tmd.backend.repository.UserRepository;
@@ -40,7 +41,10 @@ class PetServiceTest {
         given(userRepository.findByEmail("user@example.com")).willReturn(Optional.of(user));
         given(request.getName()).willReturn("멍이");
         given(request.getBreed()).willReturn("시바견");
-        given(request.getSize()).willReturn("SMALL");
+        given(request.getWeight()).willReturn(8.5);
+        given(request.isHasMuzzle()).willReturn(false);
+        given(request.isHasLeash()).willReturn(true);
+        given(request.isHasCarrier()).willReturn(true);
         given(request.getImageUploadId()).willReturn(uploadId);
         given(imageService.attachReadyUpload("user@example.com", uploadId, ImageUsage.PET))
             .willReturn("images/pet/test.jpg");
@@ -54,8 +58,12 @@ class PetServiceTest {
         ArgumentCaptor<List<Pet>> captor = ArgumentCaptor.captor();
         verify(petRepository).saveAll(captor.capture());
         assertThat(captor.getValue().getFirst().getBreed()).isEqualTo(PetBreed.SHIBA_INU);
+        assertThat(captor.getValue().getFirst().getWeight()).isEqualTo(8.5);
+        assertThat(captor.getValue().getFirst().isHasLeash()).isTrue();
+        assertThat(captor.getValue().getFirst().isHasCarrier()).isTrue();
         assertThat(captor.getValue().getFirst().getImageKey()).isEqualTo("images/pet/test.jpg");
         assertThat(responses.getFirst().getBreed()).isEqualTo("시바견");
+        assertThat(responses.getFirst().getWeight()).isEqualTo(8.5);
         assertThat(responses.getFirst().getImageUrl())
             .isEqualTo("https://images.example.com/images/pet/test.jpg");
     }
@@ -68,6 +76,32 @@ class PetServiceTest {
     @Test
     void rejectsEnglishEnumName() {
         assertInvalidBreed("SHIBA_INU");
+    }
+
+    @Test
+    void updatesWeightAndEquipmentAndRemovesImage() {
+        PetService petService = new PetService(userRepository, petRepository, imageService);
+        User user = mock(User.class);
+        Pet pet = Pet.create(
+            user, "멍이", PetBreed.SHIBA_INU, 8.5, "images/pet/old.jpg", false, false, false);
+        PetUpdateRequest request = mock(PetUpdateRequest.class);
+        given(request.isRemoveImage()).willReturn(true);
+        given(request.getWeight()).willReturn(9.2);
+        given(request.getHasMuzzle()).willReturn(true);
+        given(request.getHasLeash()).willReturn(true);
+        given(request.getHasCarrier()).willReturn(false);
+        given(petRepository.findByIdAndUserEmail(1L, "user@example.com"))
+            .willReturn(Optional.of(pet));
+
+        var response = petService.updatePet("user@example.com", 1L, request);
+
+        assertThat(pet.getWeight()).isEqualTo(9.2);
+        assertThat(pet.getImageKey()).isNull();
+        assertThat(pet.isHasMuzzle()).isTrue();
+        assertThat(pet.isHasLeash()).isTrue();
+        assertThat(pet.isHasCarrier()).isFalse();
+        assertThat(response.getImageUrl()).isNull();
+        verify(imageService).markForDeletion("images/pet/old.jpg");
     }
 
     private void assertInvalidBreed(String breed) {

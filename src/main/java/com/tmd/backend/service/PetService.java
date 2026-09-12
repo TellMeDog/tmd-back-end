@@ -4,7 +4,6 @@ import com.tmd.backend.common.ErrorCode;
 import com.tmd.backend.domain.image.ImageUsage;
 import com.tmd.backend.domain.pet.Pet;
 import com.tmd.backend.domain.pet.PetBreed;
-import com.tmd.backend.domain.pet.PetSize;
 import com.tmd.backend.domain.user.User;
 import com.tmd.backend.dto.request.pet.PetRegisterRequest;
 import com.tmd.backend.dto.request.pet.PetUpdateRequest;
@@ -38,8 +37,11 @@ public class PetService {
             user,
             request.getName(),
             parseBreed(request.getBreed()),
-            parseSize(request.getSize()),
-            imageService.attachReadyUpload(email, request.getImageUploadId(), ImageUsage.PET)
+            request.getWeight(),
+            imageService.attachReadyUpload(email, request.getImageUploadId(), ImageUsage.PET),
+            request.isHasMuzzle(),
+            request.isHasLeash(),
+            request.isHasCarrier()
         )).toList();
         return petRepository.saveAll(pets).stream().map(this::toResponse).toList();
     }
@@ -61,7 +63,8 @@ public class PetService {
             imageService.markForDeletion(previousImageKey);
         }
         pet.update(request.getName(), parseBreedNullable(request.getBreed()),
-            parseSizeNullable(request.getSize()), imageKey);
+            request.getWeight(), imageKey, request.getHasMuzzle(), request.getHasLeash(),
+            request.getHasCarrier());
         return toResponse(pet);
     }
 
@@ -81,7 +84,9 @@ public class PetService {
     private PetResponse toResponse(Pet pet) {
         return PetResponse.builder()
             .petId(pet.getId()).name(pet.getName()).breed(pet.getBreed().getKoreanName())
-            .size(pet.getSize().name()).imageUrl(imageService.toPublicUrl(pet.getImageKey())).build();
+            .weight(pet.getWeight()).imageUrl(imageService.toPublicUrl(pet.getImageKey()))
+            .hasMuzzle(pet.isHasMuzzle()).hasLeash(pet.isHasLeash()).hasCarrier(pet.isHasCarrier())
+            .build();
     }
 
     private PetBreed parseBreed(String value) {
@@ -93,16 +98,5 @@ public class PetService {
 
     private PetBreed parseBreedNullable(String value) {
         return value == null ? null : parseBreed(value);
-    }
-
-    private PetSize parseSize(String value) {
-        try { return PetSize.valueOf(value); }
-        catch (IllegalArgumentException | NullPointerException e) {
-            throw new BaseException(ErrorCode.VALIDATION_ERROR);
-        }
-    }
-
-    private PetSize parseSizeNullable(String value) {
-        return value == null ? null : parseSize(value);
     }
 }

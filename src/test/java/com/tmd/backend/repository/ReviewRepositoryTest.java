@@ -2,7 +2,6 @@ package com.tmd.backend.repository;
 
 import com.tmd.backend.domain.pet.Pet;
 import com.tmd.backend.domain.pet.PetBreed;
-import com.tmd.backend.domain.pet.PetSize;
 import com.tmd.backend.domain.place.Place;
 import com.tmd.backend.domain.review.FeedbackType;
 import com.tmd.backend.domain.review.Review;
@@ -137,8 +136,10 @@ class ReviewRepositoryTest {
     @Test
     @DisplayName("방문 견종을 리뷰 수가 많은 순서로 제한 조회")
     void findTopBreedsByPlaceId_상위견종조회() {
-        Pet mock1 = em.persist(Pet.create(user, "첫째", PetBreed.SHIBA_INU, PetSize.SMALL, null));
-        Pet mock2 = em.persist(Pet.create(user, "둘째", PetBreed.BEAGLE, PetSize.SMALL, null));
+        Pet mock1 = em.persist(Pet.create(
+            user, "첫째", PetBreed.SHIBA_INU, 8.5, null, false, true, false));
+        Pet mock2 = em.persist(Pet.create(
+            user, "둘째", PetBreed.BEAGLE, 12.0, null, false, true, true));
         em.persist(Review.create(user, place, mock1, FeedbackType.ENTERED, null, null, 5, null, null));
         em.persist(Review.create(user, place, mock1, FeedbackType.ENTERED, null, null, 4, null, null));
         em.persist(Review.create(user, place, mock2, FeedbackType.ENTERED, null, null, 3, null, null));
