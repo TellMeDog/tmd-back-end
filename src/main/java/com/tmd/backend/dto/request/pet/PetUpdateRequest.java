@@ -1,22 +1,24 @@
 package com.tmd.backend.dto.request.pet;
 
-import com.tmd.backend.domain.pet.PetBreed;
-import com.tmd.backend.domain.pet.PetSize;
+import jakarta.validation.constraints.Positive;
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.util.UUID;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PetUpdateRequest {
-    private Long petId;
     private String name;
-    private String breed;  // [수정] PetBreed(Enum) → String
-    private Double size;  // [수정] PetSize(Enum) → Double
-    private String imageUrl;
+    private String breed;
+
+    @Positive(message = "몸무게는 0보다 커야 합니다.")
+    private Double weight;
+
+    private UUID imageUploadId;
+    private boolean removeImage;
     private Boolean hasMuzzle;
     private Boolean hasLeash;
     private Boolean hasCarrier;
-    // [수정] isVaccinated 필드 제거
 }

@@ -1,10 +1,15 @@
 package com.tmd.backend.dto.request.image;
 
+import com.tmd.backend.domain.image.ImageUsage;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 public record PresignedUrlRequest(
+    @NotNull(message = "이미지 사용 목적은 필수입니다.")
+    ImageUsage usage,
+
     @NotBlank(message = "파일 이름은 필수입니다.")
     @Size(max = 255, message = "파일 이름은 255자를 초과할 수 없습니다.")
     String filename,

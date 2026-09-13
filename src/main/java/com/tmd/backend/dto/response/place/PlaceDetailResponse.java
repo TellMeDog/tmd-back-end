@@ -1,6 +1,7 @@
 package com.tmd.backend.dto.response.place;
 
-import com.tmd.backend.dto.response.review.PlaceReviewItemResponse;
+import com.tmd.backend.dto.response.PageResponse;
+import com.tmd.backend.dto.response.review.ReviewDetailResponse;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -9,24 +10,16 @@ import java.util.List;
 @Getter
 @Builder
 public class PlaceDetailResponse {
-    private Long placeId;
-    private String contentId;
+    private PlaceMarkerResponse placeMarkerResponse;
     private String zipCode;
     private String addr1;
     private String addr2;
-    private String title;
-    private double mapX;
-    private double mapY;
-    private String firstImage;
     private String firstImage2;
-    private long dist; // 검색 좌표로부터 거리
     private String modifiedTime; // 최근 수정일
-    private String markerColor;
     private PetPolicyInfo petPolicyInfo;
-    private boolean isFavorite;
-    private double averageRating;
     private VisitStats visitStats;
-    private List<PlaceReviewItemResponse> recentReviews; // 최근 5개. 이후는 Pagination
+    private List<ReviewDetailResponse> myReviews;
+    private PageResponse<ReviewDetailResponse> reviews;
 
     @Getter
     @Builder

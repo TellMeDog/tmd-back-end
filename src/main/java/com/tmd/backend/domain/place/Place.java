@@ -1,5 +1,6 @@
 package com.tmd.backend.domain.place;
 
+import com.tmd.backend.domain.review.Review;
 import com.tmd.backend.external.TourApiPlaceItem;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -7,6 +8,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.math.NumberUtils;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -35,6 +39,9 @@ public class Place {
 
     @OneToOne(mappedBy = "place", cascade = CascadeType.ALL, orphanRemoval = true)
     private PlacePetInfo placePetInfo;
+
+    @OneToOne(mappedBy = "place", cascade = CascadeType.ALL, orphanRemoval = true)
+    private PlacePetPolicy placePetPolicy;
 
     @Builder
     public Place(String contentId, String zipCode, String addr1, String addr2, String title, Double mapX, Double mapY, String firstImage, String firstImage2, String modifiedTime, String lDongRegnCd, String lDongSignguCd, String lclsSystm1, String lclsSystm2, String lclsSystm3) {

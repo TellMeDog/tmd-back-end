@@ -23,6 +23,8 @@ public enum ErrorCode {
     INVALID_IMAGE_SIZE(HttpStatus.BAD_REQUEST, "이미지 크기가 올바르지 않거나 허용 범위를 초과했습니다."),
     UNKNOWN_REGION(HttpStatus.BAD_REQUEST, "등록되지 않은 지역입니다."),
 
+    INVALID_IMAGE_UPLOAD(HttpStatus.BAD_REQUEST, "이미지 업로드 상태가 올바르지 않습니다."),
+
     //401
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "로그인이 필요한 서비스입니다."),
     EXPIRED_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "다시 로그인 해주세요."),
@@ -43,9 +45,16 @@ public enum ErrorCode {
     PLACE_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 장소입니다."),
     REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 리뷰입니다."),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 사용자입니다."), //UserService 구현 시 이메일을 못 찾을 상황 처리를 위해 추가한 코드
+    IMAGE_UPLOAD_NOT_FOUND(HttpStatus.NOT_FOUND, "이미지 업로드를 찾을 수 없습니다."),
+
     //409
     DUPLICATE_EMAIL(HttpStatus.CONFLICT, "이미 가입한 이메일입니다."),
     ALREADY_FAVORITE(HttpStatus.CONFLICT, "이미 즐겨찾기한 장소입니다."),
+    IMAGE_UPLOAD_ALREADY_USED(HttpStatus.CONFLICT, "이미 사용된 이미지 업로드입니다."),
+
+    //502
+    IMAGE_STORAGE_ERROR(HttpStatus.BAD_GATEWAY, "이미지 저장소 처리 중 오류가 발생했습니다."),
+
     //500
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버에 오류가 발생했습니다.");
 

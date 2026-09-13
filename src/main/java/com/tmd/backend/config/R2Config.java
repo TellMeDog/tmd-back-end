@@ -7,6 +7,8 @@ import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3Configuration;
 
 import java.net.URI;
 
@@ -29,6 +31,17 @@ public class R2Config {
             .credentialsProvider(StaticCredentialsProvider.create(
                 AwsBasicCredentials.create(accessKey, secretKey)))
             .region(Region.of("auto"))
+            .build();
+    }
+
+    @Bean
+    public S3Client r2Client() {
+        return S3Client.builder()
+            .endpointOverride(URI.create(endpoint))
+            .credentialsProvider(StaticCredentialsProvider.create(
+                AwsBasicCredentials.create(accessKey, secretKey)))
+            .region(Region.of("auto"))
+            .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build())
             .build();
     }
 }

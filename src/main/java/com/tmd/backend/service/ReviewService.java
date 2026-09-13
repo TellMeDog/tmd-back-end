@@ -1,7 +1,9 @@
 package com.tmd.backend.service;
 
 import com.tmd.backend.common.ErrorCode;
+import com.tmd.backend.domain.image.ImageUsage;
 import com.tmd.backend.domain.pet.Pet;
+import com.tmd.backend.domain.pet.PetBreed;
 import com.tmd.backend.domain.place.Place;
 import com.tmd.backend.domain.review.FeedbackType;
 import com.tmd.backend.domain.review.MismatchReason;
@@ -12,7 +14,6 @@ import com.tmd.backend.dto.request.review.ReviewUpdateRequest;
 import com.tmd.backend.dto.response.PageResponse;
 import com.tmd.backend.dto.response.place.PlaceDetailResponse;
 import com.tmd.backend.dto.response.review.MyReviewListResponse;
-import com.tmd.backend.dto.response.review.PlaceReviewItemResponse;
 import com.tmd.backend.dto.response.review.ReviewDetailResponse;
 import com.tmd.backend.exception.BaseException;
 import com.tmd.backend.repository.PetRepository;
@@ -44,6 +45,7 @@ public class ReviewService {
     private final PetRepository petRepository;
     private final ReviewRepository reviewRepository;
     private final CacheManager cacheManager;
+    private final ImageService imageService;
 
     @Transactional
     public void createReview(String email, Long placeId, ReviewCreateRequest request) {
@@ -54,9 +56,12 @@ public class ReviewService {
         Place place = placeRepository.findById(placeId)
             .orElseThrow(() -> new BaseException(ErrorCode.PLACE_NOT_FOUND));
         Pet pet = request.getPetId() != null
-            ? petRepository.findById(request.getPetId())
+            ? petRepository.findByIdAndUserEmail(request.getPetId(), email)
                 .orElseThrow(() -> new BaseException(ErrorCode.FORBIDDEN))
             : null;
+
+        String imageKey = imageService.attachReadyUpload(
+            email, request.getImageUploadId(), ImageUsage.REVIEW);
 
         reviewRepository.save(Review.create(
             user, place, pet,
@@ -65,7 +70,7 @@ public class ReviewService {
             request.getEtcReasons(),
             request.getRating(),
             request.getContent(),
-            request.getImageKey()
+            imageKey
         ));
         evictPlaceCache(placeId);
     }
@@ -78,13 +83,27 @@ public class ReviewService {
             .orElseThrow(() -> new BaseException(ErrorCode.REVIEW_NOT_FOUND));
         Long placeId = review.getPlace().getId();
 
+        if (request.isRemoveImage() && request.getImageUploadId() != null) {
+            throw new BaseException(ErrorCode.INVALID_IMAGE_UPLOAD);
+        }
+        String previousImageKey = review.getImageKey();
+        String imageKey = previousImageKey;
+        if (request.getImageUploadId() != null) {
+            imageKey = imageService.attachReadyUpload(
+                email, request.getImageUploadId(), ImageUsage.REVIEW);
+            imageService.markForDeletion(previousImageKey);
+        } else if (request.isRemoveImage()) {
+            imageKey = null;
+            imageService.markForDeletion(previousImageKey);
+        }
+
         review.update(
             request.getFeedbackType(),
             request.getMismatchReasons(),
             request.getEtcReason(),
             request.getRating(),
             request.getContent(),
-            request.getImageKey()
+            imageKey
         );
         evictPlaceCache(placeId);
     }
@@ -94,39 +113,55 @@ public class ReviewService {
         Review review = reviewRepository.findByIdAndUserEmail(reviewId, email)
             .orElseThrow(() -> new BaseException(ErrorCode.REVIEW_NOT_FOUND));
         Long placeId = review.getPlace().getId();
+        imageService.markForDeletion(review.getImageKey());
         reviewRepository.delete(review);
         evictPlaceCache(placeId);
     }
 
-    public PageResponse<PlaceReviewItemResponse> getPlaceReviewList(Long placeId, int page, int size, String sort) {
-        Sort sortOption = "rating".equals(sort)
-            ? Sort.by(Sort.Direction.DESC, "rating")
-            : Sort.by(Sort.Direction.DESC, "createdAt");
-        Page<Review> reviewPage = reviewRepository.findByPlaceIdWithUser(placeId,
-            PageRequest.of(page, size, sortOption));
+    // 장소의 전체 리뷰(페이지네이션)
+    public PageResponse<ReviewDetailResponse> getPlaceReviewList(
+        Long placeId,
+        String email,
+        int page,
+        int size,
+        String sort
+    ) {
+        Page<Review> reviewPage = reviewRepository.findByPlaceIdExcludingUser(
+            placeId,
+            email,
+            createReviewPageRequest(page, size, sort)
+        );
 
         return new PageResponse<>(
-            reviewPage.getContent().stream().map(this::toPlaceReviewItemResponse).toList(),
-            (int) reviewPage.getTotalElements(),
-            reviewPage.getTotalPages()
+            reviewPage.getContent().stream().map(this::toReviewDetailResponse).toList(),
+            reviewPage.getNumber(),
+            reviewPage.getSize(),
+            reviewPage.getTotalElements(),
+            reviewPage.getTotalPages(),
+            reviewPage.hasNext()
         );
     }
 
-    public ReviewDetailResponse getMyReview(Long reviewId, String email) {
-        Review review = reviewRepository.findByIdAndUserEmail(reviewId, email)
-            .orElseThrow(() -> new BaseException(ErrorCode.REVIEW_NOT_FOUND));
-        return toReviewDetailResponse(review);
-    }
-
-    public PageResponse<MyReviewListResponse> getMyReviewList(String email, int page, int size) {
+    public PageResponse<MyReviewListResponse> getMyReviewListInMyPage(String email, int page, int size) {
         Page<Review> reviewPage = reviewRepository.findByUserEmail(email,
-            PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt")));
+            PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"))); // 최신순
 
         return new PageResponse<>(
             reviewPage.getContent().stream().map(this::toMyReviewListResponse).toList(),
-            (int) reviewPage.getTotalElements(),
-            reviewPage.getTotalPages()
+            reviewPage.getNumber(),
+            reviewPage.getSize(),
+            reviewPage.getTotalElements(),
+            reviewPage.getTotalPages(),
+            reviewPage.hasNext()
         );
+    }
+
+    public List<ReviewDetailResponse> getMyReviewListInPlace(Long placeId, String email) {
+        return reviewRepository
+            .findByPlaceIdAndUserEmailOrderByCreatedAtDescIdDesc(placeId, email)
+            .stream()
+            .map(this::toReviewDetailResponse)
+            .toList();
     }
 
     @Cacheable(value = "averageRating", key = "#placeId")
@@ -140,12 +175,14 @@ public class ReviewService {
             .stream()
             .collect(Collectors.toMap(row -> (FeedbackType) row[0], row -> (Long) row[1]));
 
-        List<Review> top5 = reviewRepository.findTop5ByPlaceIdOrderByCreatedAtDesc(placeId);
-        String lastReportedAt = top5.isEmpty() ? null : top5.get(0).getCreatedAt().toString();
+        String lastReportedAt = reviewRepository.findLastReportedAtByPlaceId(placeId)
+            .map(Object::toString)
+            .orElse(null);
 
-        List<String> topBreeds = reviewRepository.findTopBreedByPlaceId(placeId).stream()
-            .map(row -> (String) row[0])
-            .limit(3)
+        List<String> topBreeds = reviewRepository
+            .findTopBreedsByPlaceId(placeId, PageRequest.of(0, 3))
+            .stream()
+            .map(row -> ((PetBreed) row[0]).getKoreanName())
             .toList();
 
         return PlaceDetailResponse.VisitStats.builder()
@@ -157,24 +194,25 @@ public class ReviewService {
             .build();
     }
 
-    public List<PlaceReviewItemResponse> getRecentReviews(Long placeId) {
-        return reviewRepository.findTop5ByPlaceIdOrderByCreatedAtDesc(placeId).stream()
-            .map(this::toPlaceReviewItemResponse)
-            .toList();
-    }
+    private PageRequest createReviewPageRequest(int page, int size, String sort) {
+        if (page < 0 || size < 1 || size > 100) {
+            throw new BaseException(ErrorCode.VALIDATION_ERROR);
+        }
 
-    private PlaceReviewItemResponse toPlaceReviewItemResponse(Review review) {
-        return PlaceReviewItemResponse.builder()
-            .reviewId(review.getId())
-            .writer(review.getUser().getEmail())
-            .feedbackType(review.getFeedbackType())
-            .mismatchReasons(review.getMismatchReasons())
-            .etcReason(review.getEtcReason())
-            .rating(review.getRating())
-            .content(review.getContent())
-            .imageKey(review.getImageKey())
-            .createdAt(review.getCreatedAt().toString())
-            .build();
+        Sort sortOption = switch (sort) {
+            case "latest" -> Sort.by(
+                Sort.Order.desc("createdAt"),
+                Sort.Order.desc("id")
+            );
+            case "rating" -> Sort.by(
+                Sort.Order.desc("rating"),
+                Sort.Order.desc("createdAt"),
+                Sort.Order.desc("id")
+            );
+            default -> throw new BaseException(ErrorCode.VALIDATION_ERROR);
+        };
+
+        return PageRequest.of(page, size, sortOption);
     }
 
     private ReviewDetailResponse toReviewDetailResponse(Review review) {
@@ -190,7 +228,7 @@ public class ReviewService {
             .etcReason(review.getEtcReason())
             .rating(review.getRating())
             .content(review.getContent())
-            .imageKey(review.getImageKey())
+            .imageUrl(imageService.toPublicUrl(review.getImageKey()))
             .createdAt(review.getCreatedAt().toString())
             .build();
     }
@@ -207,6 +245,7 @@ public class ReviewService {
             .build();
     }
 
+    //캐시 삭제
     private void evictPlaceCache(Long placeId) {
         Cache avg = cacheManager.getCache("averageRating");
         Cache stats = cacheManager.getCache("visitStats");

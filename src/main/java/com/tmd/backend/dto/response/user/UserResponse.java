@@ -1,5 +1,3 @@
-// Repository에서 findByEmail로 "찾아온 데이터를 어떻게 포장해서 보낼지" 정하는 클래스
-
 package com.tmd.backend.dto.response.user;
 
 import lombok.AccessLevel;

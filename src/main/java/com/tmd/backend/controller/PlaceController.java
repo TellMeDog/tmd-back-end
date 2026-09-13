@@ -32,13 +32,25 @@ public class PlaceController {
         @Parameter(description = "지도 영역의 남서쪽 경도", example = "127.1234") @RequestParam double swLng,
         @Parameter(description = "지도 영역의 북동쪽 위도", example = "38.1234") @RequestParam double neLat,
         @Parameter(description = "지도 영역의 북동쪽 경도", example = "128.1234") @RequestParam double neLng,
+        @Parameter(description = "사용자 현재 경도 좌표", example = "127.1234") @RequestParam double currMapX,
+        @Parameter(description = "사용자 현재 위도 좌표", example = "37.1234") @RequestParam double currMapY,
         @Parameter(description = "검색할 카테고리", example = "카페") @RequestParam String category,
         @Parameter(description = "조회할 반려동물 ID", example = "1") @RequestParam Long petId,
         @AuthenticationPrincipal(expression = "username") String email) {
 
         log.info("장소 목록 조회: bounds=({},{})~({},{}), petId={}, category={}", swLat, swLng, neLat, neLng, petId, category);
 
-        List<PlaceMarkerResponse> response = placeService.searchByCategory(category, email, petId, swLat, swLng, neLat, neLng);
+        List<PlaceMarkerResponse> response = placeService.searchByCategory(
+            category,
+            email,
+            petId,
+            swLat,
+            swLng,
+            neLat,
+            neLng,
+            currMapX,
+            currMapY
+        );
 
         return ResponseEntity.ok(SuccessResponseDto.success("장소 목록을 조회했습니다.", response));
     }
@@ -51,13 +63,15 @@ public class PlaceController {
     public ResponseEntity<SuccessResponseDto<List<PlaceMarkerResponse>>> searchPlaces(
         @Parameter(description = "검색 키워드", example = "용산공원") @RequestParam String keyword,
         @Parameter(description = "조회할 반려동물 ID", example = "1") @RequestParam Long petId,
+        @Parameter(description = "조회할 반려동물 ID", example = "1") @RequestParam double currMapX,
+        @Parameter(description = "조회할 반려동물 ID", example = "1") @RequestParam double currMapY,
         @AuthenticationPrincipal(expression = "username") String email) {
 
-        log.info("장소 검색: keyword={}, petID={}, email={}", keyword, petId, email);
+        log.info("키워드 장소 검색: keyword={}, petID={}, email={}, 현재좌표: {}, {}", keyword, petId, email, currMapX, currMapY);
 
-        List<PlaceMarkerResponse> response = placeService.searchByKeyword(keyword, petId, email);
+        List<PlaceMarkerResponse> response = placeService.searchByKeyword(keyword, petId, email, currMapX, currMapY);
 
-        return ResponseEntity.ok(SuccessResponseDto.success("장소 목록을 조회했습니다.", response));
+        return ResponseEntity.ok(SuccessResponseDto.success("키워드 장소 목록을 조회했습니다.", response));
     }
 
     @Operation(
@@ -69,9 +83,11 @@ public class PlaceController {
         @Parameter(description = "시도 이름", example = "서울특별시") @PathVariable String lDongRegnNm,
         @Parameter(description = "시군구 이름", example = "강남구") @PathVariable String lDongSignguNm,
         @Parameter(description = "조회할 반려동물 ID", example = "1") @RequestParam Long petId,
+        @Parameter(description = "사용자 현재 경도 좌표", example = "127.1234") @RequestParam double currMapX,
+        @Parameter(description = "사용자 현재 위도 좌표", example = "37.1234") @RequestParam double currMapY,
         @AuthenticationPrincipal(expression = "username") String email){
         log.info("지역 기반 장소 검색: 시도 이름 = {}, 시군구 이름 = {}, petId = {}, email = {}", lDongRegnNm, lDongSignguNm, petId, email);
-        List<PlaceMarkerResponse> response = placeService.searchByRegion(lDongRegnNm, lDongSignguNm, petId, email);
+        List<PlaceMarkerResponse> response = placeService.searchByRegion(lDongRegnNm, lDongSignguNm, petId, email, currMapX, currMapY);
 
         return ResponseEntity.ok(SuccessResponseDto.success("지역 기반 장소 목록을 조회했습니다.", response));
     }
@@ -86,11 +102,23 @@ public class PlaceController {
         @Parameter(description = "장소의 위도", example = "37.1234") @RequestParam double mapY,
         @Parameter(description = "장소 ID", example = "1") @PathVariable Long placeId,
         @Parameter(description = "조회할 반려동물 ID", example = "1")@RequestParam Long petId,
+        @Parameter(description = "첫 리뷰 페이지 크기", example = "10")
+        @RequestParam(defaultValue = "10") int reviewSize,
+        @Parameter(description = "리뷰 정렬 옵션", example = "latest")
+        @RequestParam(defaultValue = "latest") String reviewSort,
         @AuthenticationPrincipal(expression = "username") String email) {
 
         log.info("장소 상세 조회: placeId={}, petId={}", placeId, petId);
 
-        PlaceDetailResponse response = placeService.getPlaceDetail(mapX, mapY, placeId, petId, email);
+        PlaceDetailResponse response = placeService.getPlaceDetail(
+            placeId,
+            petId,
+            email,
+            mapX,
+            mapY,
+            reviewSize,
+            reviewSort
+        );
 
         return ResponseEntity.ok(SuccessResponseDto.success("장소 상세 정보를 조회했습니다.", response));
     }

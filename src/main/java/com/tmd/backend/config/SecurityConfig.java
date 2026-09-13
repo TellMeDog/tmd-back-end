@@ -45,7 +45,7 @@ public class SecurityConfig {
             .oauth2Login(oauth2 ->
                 oauth2
                     .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
-            .successHandler(oAuth2LoginSuccessHandler))
+                    .successHandler(oAuth2LoginSuccessHandler))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         return http.build();
@@ -54,11 +54,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfiguration(){
         CorsConfiguration corsConfiguration = new CorsConfiguration();
-        corsConfiguration.setAllowedOrigins(List.of("https://tellmedog.vercel.app/", "http://localhost:5173")); // 프론트엔드 개발 포트에 맞춰야함.
+        corsConfiguration.setAllowedOrigins(List.of("https://tellmedog.vercel.app", "http://localhost:5173")); // 프론트엔드 개발 포트에 맞춰야함.
         corsConfiguration.setAllowedHeaders(List.of("*"));
         corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        corsConfiguration.setAllowCredentials(true);
-        corsConfiguration.setExposedHeaders(List.of("Authorization"));
+        corsConfiguration.setAllowCredentials(true); // 쿠키 수신을 위한 설정
+        corsConfiguration.setExposedHeaders(List.of("Authorization")); // 응답 헤더에 AccessToken을 담기 위한 설정
         UrlBasedCorsConfigurationSource urlBasedCorsConfigurationSource = new UrlBasedCorsConfigurationSource();
         urlBasedCorsConfigurationSource.registerCorsConfiguration("/**", corsConfiguration);
         return urlBasedCorsConfigurationSource;
