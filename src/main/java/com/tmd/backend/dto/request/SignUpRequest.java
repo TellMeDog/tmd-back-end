@@ -25,10 +25,15 @@ public class SignUpRequest {
     @NotEmpty(message = "비밀번호 확인을 입력해주세요.")
     private String confirmPassword;
 
+    @NotEmpty(message = "닉네임을 입력해주세요.")
+    @Size(min = 2, max = 20, message = "닉네임은 2~20자로 입력해주세요.")
+    private String nickname;
+
     @Builder
-    public SignUpRequest(String email, String password, String confirmPassword){
+    public SignUpRequest(String email, String password, String confirmPassword, String nickname){
         this.email=email;
         this.password=password;
         this.confirmPassword=confirmPassword;
+        this.nickname=nickname;
     }
 }

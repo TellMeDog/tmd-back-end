@@ -1,5 +1,5 @@
 package com.tmd.backend.domain.user;
 
 public enum AuthProvider {
-    LOCAL, GOOGLE, KAKAO
+    LOCAL, GOOGLE, KAKAO, NAVER
 }

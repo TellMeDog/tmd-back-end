@@ -28,11 +28,30 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String email = oAuth2UserInfo.getEmail();
         AuthProvider provider = oAuth2UserInfo.getProvider();
         String providerId = oAuth2UserInfo.getProviderId();
+        String nickname = resolveNickname(oAuth2UserInfo.getNickname(), email);
 
         User user = userRepository.findByProviderAndProviderId(provider, providerId)
             .orElseGet(() -> userRepository.save(
-                User.createOAuth(email, provider, providerId)));
+                User.createOAuth(email, provider, providerId, nickname)));
 
         return new CustomOAuth2User(user, oAuth2User.getAttributes());
+    }
+
+    static String resolveNickname(String providerNickname, String email) {
+        String nickname = providerNickname == null ? "" : providerNickname.strip();
+        if (nickname.isEmpty() && email != null) {
+            int separator = email.indexOf('@');
+            nickname = (separator > 0 ? email.substring(0, separator) : email).strip();
+        }
+        if (nickname.isEmpty()) {
+            nickname = "user";
+        }
+
+        int codePointCount = nickname.codePointCount(0, nickname.length());
+        if (codePointCount <= 20) {
+            return nickname;
+        }
+        int endIndex = nickname.offsetByCodePoints(0, 20);
+        return nickname.substring(0, endIndex);
     }
 }

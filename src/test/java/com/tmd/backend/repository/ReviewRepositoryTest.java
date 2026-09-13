@@ -37,7 +37,7 @@ class ReviewRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        user = em.persist(User.createLocal("test@email.com", "encoded-password"));
+        user = em.persist(User.createLocal("test@email.com", "encoded-password", "테스트"));
         place = em.persist(Place.create(
             "CONTENT001", null, "서울시 강남구", null, "테스트 장소",
             127.05, 37.50, null, null, null,
@@ -194,7 +194,7 @@ class ReviewRepositoryTest {
     @Test
     @DisplayName("전체 리뷰 페이지는 현재 사용자의 리뷰를 제외한다")
     void findByPlaceIdExcludingUser_내리뷰제외() {
-        User otherUser = em.persist(User.createLocal("other@email.com", "encoded-password"));
+        User otherUser = em.persist(User.createLocal("other@email.com", "encoded-password", "다른사용자"));
         em.persist(review(FeedbackType.ENTERED, 5));
         Review otherReview = em.persist(review(otherUser, place, FeedbackType.ENTERED, 4));
         em.flush();
