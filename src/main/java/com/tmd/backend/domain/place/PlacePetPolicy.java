@@ -22,25 +22,27 @@ public class PlacePetPolicy {
     private Place place;
 
     @Enumerated(EnumType.STRING)
-    private AccessScope accessScope;
+    private AccessScope accessScope; // 동반 가능 구역
 
-    private Boolean allBreedsAllowed;
-    private Boolean dangerousBreedAllowed;
-    private Boolean dangerousBreedAllowedCondition;
+    private Boolean allBreedsAllowed; // 동반 가능 견종
+    private Boolean dangerousBreedAllowed; // 맹견 입장 가능 여부 (ex. 입마개 착용시 가능이면 True)
+    private String dangerousBreedAllowedCondition; // 맹견 입장 가능 조건 (ex. MUZZLE)
 
-    private Double maxWeightKg;
+    private Double maxWeightKg; // 입장 가능 최대 몸무게
 
     @Enumerated(EnumType.STRING)
-    private WeightLimitType weightLimitType;
+    private WeightLimitType weightLimitType; // 미만, 이하, 알 수 없음
 
-    private Boolean leashRequired;
-    private Boolean muzzleRequired;
-    private Boolean kennelRequired;
-    private Boolean advanceInquiryRequired;
-    private Integer maxPetCount;
+    private Boolean leashRequired; // 목줄 필수 여부
+    private Boolean muzzleRequired; // 입마개 필수 여부
+    private Boolean kennelRequired; // 이동장, 켄넬 필수 여부
+    private Boolean advanceInquiryRequired; // 사전 문의 필수 여부
+    private Integer maxPetCount; // 최대 허용 반려견 수
+
+    private String defaultPolicy; // YELLOW OR NULL
 
     @Builder
-    private PlacePetPolicy(Place place, AccessScope accessScope, Boolean allBreedsAllowed, Boolean dangerousBreedAllowed, Boolean dangerousBreedAllowedCondition, Double maxWeightKg, WeightLimitType weightLimitType, Boolean leashRequired, Boolean muzzleRequired, Boolean kennelRequired, Boolean advanceInquiryRequired, Integer maxPetCount) {
+    private PlacePetPolicy(Place place, AccessScope accessScope, Boolean allBreedsAllowed, Boolean dangerousBreedAllowed, String dangerousBreedAllowedCondition, Double maxWeightKg, WeightLimitType weightLimitType, Boolean leashRequired, Boolean muzzleRequired, Boolean kennelRequired, Boolean advanceInquiryRequired, Integer maxPetCount, String defaultPolicy) {
         this.place = place;
         this.accessScope = accessScope;
         this.allBreedsAllowed = allBreedsAllowed;
@@ -53,6 +55,7 @@ public class PlacePetPolicy {
         this.kennelRequired = kennelRequired;
         this.advanceInquiryRequired = advanceInquiryRequired;
         this.maxPetCount = maxPetCount;
+        this.defaultPolicy=defaultPolicy;
     }
 
     public static PlacePetPolicy from(Place place, PetPolicyAnalysis analysis) {
@@ -69,6 +72,7 @@ public class PlacePetPolicy {
             .kennelRequired(analysis.kennelRequired())
             .advanceInquiryRequired(analysis.advanceInquiryRequired())
             .maxPetCount(analysis.maxPetCount())
+            .defaultPolicy(analysis.defaultPolicy())
             .build();
     }
 }

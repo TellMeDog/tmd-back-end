@@ -6,7 +6,7 @@ public record PetPolicyAnalysis(
     AccessScope accessScope, // 전 구역, 일부 구역, 불가, 정보없음
     Boolean allBreedsAllowed, // 모든 견종 가능
     Boolean dangerousBreedAllowed, // 맹견 입장 가능
-    Boolean dangerousBreedAllowedCondition, // 맹견 입장 가능 조건
+    String dangerousBreedAllowedCondition, // 맹견 입장 가능 조건
 
     Double maxWeightKg, // 최대 무게
     WeightLimitType weightLimitType, // 이하, 미만, 정보없음
@@ -15,13 +15,10 @@ public record PetPolicyAnalysis(
     Boolean muzzleRequired, // 입마개 필수 여부
     Boolean kennelRequired, // 이동장 필수 여부
 
-    Boolean vaccinationRequired, // 예방 접종 여부
     Boolean advanceInquiryRequired, // 사전 문의 필수 여부
 
     Integer maxPetCount, // 최대 동반 가능 마리 수
 
-    String accessAreaDescription,
-
-    String exceptions
+    String defaultPolicy // YELLOW or NULL
 ) {
 }
