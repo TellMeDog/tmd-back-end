@@ -39,6 +39,7 @@ class PlaceCategorySearchTest {
     @Mock MarkerColorService markerColorService;
     @Mock KeywordCacheService keywordCacheService;
     @Mock ReviewService reviewService;
+    @Mock FavoriteService favoriteService;
 
     @InjectMocks PlaceService placeService;
 
