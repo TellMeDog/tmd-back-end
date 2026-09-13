@@ -34,6 +34,17 @@ public class FavoriteController {
         ));
     }
 
+    @GetMapping("/{placeId}")
+    public ResponseEntity<SuccessResponseDto<Boolean>> getFavoriteStatus(
+        @PathVariable Long placeId,
+        @AuthenticationPrincipal(expression = "username") String email
+    ) {
+        return ResponseEntity.ok(SuccessResponseDto.success(
+            "즐겨찾기 여부를 조회했습니다.",
+            favoriteService.isFavorite(email, placeId)
+        ));
+    }
+
     @PostMapping("/{placeId}")
     public ResponseEntity<SuccessResponseDto<Void>> addFavorite(
         @PathVariable Long placeId,

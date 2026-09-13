@@ -1,6 +1,7 @@
 package com.tmd.backend.domain.user;
 
 import com.tmd.backend.domain.pet.Pet;
+import com.tmd.backend.domain.review.Review;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -42,6 +43,9 @@ public class User {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Pet> pets = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Review> reviews = new ArrayList<>();
 
     @Builder
     private User(String email, String password, AuthProvider provider, String providerId, String nickname) {
