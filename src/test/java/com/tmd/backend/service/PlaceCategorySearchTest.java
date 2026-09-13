@@ -1,6 +1,7 @@
 package com.tmd.backend.service;
 
 import com.tmd.backend.common.ErrorCode;
+import com.tmd.backend.common.MarkerColor;
 import com.tmd.backend.domain.pet.Pet;
 import com.tmd.backend.domain.place.Place;
 import com.tmd.backend.dto.response.place.PlaceMarkerResponse;
@@ -52,6 +53,8 @@ class PlaceCategorySearchTest {
 
         given(petRepository.findByIdAndUserEmail(1L, "test@email.com"))
             .willReturn(Optional.of(pet));
+        given(markerColorService.calculateMarkerColor(null, pet))
+            .willReturn(MarkerColor.GREY);
         given(placeRepository.findPlacesWithCategory(
             37.0, 127.0, 38.0, 128.0, "FD", "FD05", null
         )).willReturn(List.of(farPlace, nearPlace));
@@ -75,6 +78,8 @@ class PlaceCategorySearchTest {
 
         given(petRepository.findByIdAndUserEmail(1L, "test@email.com"))
             .willReturn(Optional.of(pet));
+        given(markerColorService.calculateMarkerColor(null, pet))
+            .willReturn(MarkerColor.GREY);
         given(placeRepository.findPlacesWithCategory(
             37.0, 127.0, 38.0, 128.0, "FD", "FD01", null
         )).willReturn(List.of(place));
