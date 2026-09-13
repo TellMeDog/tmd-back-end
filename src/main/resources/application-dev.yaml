@@ -59,11 +59,11 @@ cloudflare:
     secret-key: ${R2_SECRET_KEY}
     bucket: ${R2_BUCKET}
     public-url: ${R2_PUBLIC_URL}
-    presigned-url-ttl-seconds: ${R2_PRESIGNED_URL_TTL_SECONDS:600}
-    max-upload-bytes: ${R2_MAX_UPLOAD_BYTES:10485760}
-    unattached-image-ttl-hours: ${R2_UNATTACHED_IMAGE_TTL_HOURS:24}
-    cleanup-interval-millis: ${R2_CLEANUP_INTERVAL_MILLIS:3600000}
-    cleanup-batch-size: ${R2_CLEANUP_BATCH_SIZE:100}
+    presigned-url-ttl-seconds: ${R2_PRESIGNED_URL_TTL_SECONDS}
+    max-upload-bytes: ${R2_MAX_UPLOAD_BYTES}
+    unattached-image-ttl-hours: ${R2_UNATTACHED_IMAGE_TTL_HOURS}
+    cleanup-interval-millis: ${R2_CLEANUP_INTERVAL_MILLIS}
+    cleanup-batch-size: ${R2_CLEANUP_BATCH_SIZE}
 
 oauth2:
   redirect-uri: ${OAUTH2_REDIRECT_URI}
