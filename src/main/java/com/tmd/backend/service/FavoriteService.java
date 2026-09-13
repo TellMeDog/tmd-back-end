@@ -95,7 +95,7 @@ public class FavoriteService {
             .thumbnailUrl(place.getFirstImage())
             .title(place.getTitle())
             .addr(place.getAddr1())
-            .markerColor(markerColorService.calculateMarkerColor(place.getPlacePetPolicy(), pet))
+            .markerColor(markerColorService.calculateMarkerColor(place.getPlacePetPolicy(), pet).name())
             .build();
     }
 

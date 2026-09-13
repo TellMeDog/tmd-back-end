@@ -1,6 +1,7 @@
 package com.tmd.backend.service;
 
 import com.tmd.backend.common.ErrorCode;
+import com.tmd.backend.common.MarkerColor;
 import com.tmd.backend.common.Region;
 import com.tmd.backend.common.RegionDetail;
 import com.tmd.backend.domain.pet.Pet;
@@ -186,7 +187,7 @@ public class PlaceService {
     }
 
     private PlaceMarkerResponse toMarkerResponse(String email, Place place, Pet pet, double currMapX, double currMapY) {
-        String color = markerColorService.calculateMarkerColor(place.getPlacePetPolicy(), pet);
+        MarkerColor color = markerColorService.calculateMarkerColor(place.getPlacePetPolicy(), pet);
         long distance = calculateDistance(currMapY, currMapX, place.getMapY(), place.getMapX());
         boolean isFavorite = favoriteService.isFavorite(email, place.getId());
         return PlaceMarkerResponse.builder()
@@ -197,7 +198,7 @@ public class PlaceService {
             .mapY(place.getMapY())
             .distance(distance)
             .isFavorite(isFavorite) // TODO: 즐겨찾기 로직 후 변경
-            .markerColor(color)
+            .markerColor(color.name())
             .averageRating(reviewService.getAverageRating(place.getId()))
             .build();
     }
