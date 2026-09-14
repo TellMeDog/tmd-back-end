@@ -33,7 +33,7 @@ public class UserController {
     // GET 방식으로 "/users/me" 요청이 오면 아래 메서드가 실행됨
 
     public ResponseEntity<SuccessResponseDto<UserResponse>> getMyInfo(
-        @AuthenticationPrincipal String email) {
+        @AuthenticationPrincipal(expression = "username") String email) {
         // @AuthenticationPrincipal 덕분에, JWT 필터가 저장해둔 "로그인한 사람의 email"이 이 email 매개변수에 자동으로 들어옴
         // (우리가 직접 꺼내는 코드를 안 짜도 Spring이 자동으로 넣어줌)
 

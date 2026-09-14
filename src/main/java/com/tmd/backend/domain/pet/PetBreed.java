@@ -52,12 +52,23 @@ public enum PetBreed {
     STANDARD_POODLE("스탠다드푸들"),
     GREAT_PYRENEES("그레이트피레니즈"),
     DOBERMAN("도베르만"),
-    ROTTWEILER("로트와일러"),
     BOXER("복서"),
     ALASKAN_MALAMUTE("알래스칸맬러뮤트"),
     BERNESE_MOUNTAIN_DOG("버니즈마운틴독"),
     SAINT_BERNARD("세인트버나드"),
     GREAT_DANE("그레이트데인"),
+
+    // 맹견
+    TOSA_INU("도사견"),
+    AMERICAN_PIT_BULL_TERRIER("아메리칸 핏불 테리어"),
+    AMERICAN_STAFFORDSHIRE_TERRIER("아메리칸 스태퍼드셔 테리어"),
+    STAFFORDSHIRE_BULL_TERRIER("스태퍼드셔 불 테리어"),
+    DOGO_ARGENTINO("도고 아르헨티노"),
+    CANE_CORSO("케인코르소"),
+    OVCHARKA("오브차카"),
+    ROTTWEILER("로트와일러"),
+    TIBETAN_MASTIFF("티베탄 마스티프"),
+    WOLF_DOG("울프독"),
 
     // 기타
     MIXED("믹스견"),

@@ -2,6 +2,7 @@ package com.tmd.backend.controller;
 
 import com.tmd.backend.dto.response.SuccessResponseDto;
 import com.tmd.backend.service.SeedService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
+@Tag(name = "백엔드용 초기 Seed 설정 Controller ", description = "시딩 API")
 @RestController
 @RequestMapping("/admin")
 @RequiredArgsConstructor
