@@ -36,7 +36,7 @@ public class FavoriteController {
         @Parameter(description = "반려견 ID", example = "1") @RequestParam Long petId,
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size,
-        @AuthenticationPrincipal(expression = "username") String email
+        @AuthenticationPrincipal String email
     ) {
         return ResponseEntity.ok(SuccessResponseDto.success(
             "즐겨찾기 목록을 조회했습니다.",
@@ -51,7 +51,7 @@ public class FavoriteController {
     @PostMapping("/{placeId}")
     public ResponseEntity<SuccessResponseDto<Void>> addFavorite(
         @Parameter(description = "장소 ID", example = "1") @PathVariable Long placeId,
-        @AuthenticationPrincipal(expression = "username") String email
+        @AuthenticationPrincipal String email
     ) {
         favoriteService.addFavorite(email, placeId);
         return ResponseEntity.ok(SuccessResponseDto.successWithoutData("즐겨찾기에 추가되었습니다."));
@@ -64,7 +64,7 @@ public class FavoriteController {
     @DeleteMapping("/{placeId}")
     public ResponseEntity<SuccessResponseDto<Void>> deleteFavorite(
         @Parameter(description = "장소ID", example = "1") @PathVariable Long placeId,
-        @AuthenticationPrincipal(expression = "username") String email
+        @AuthenticationPrincipal String email
     ) {
         favoriteService.deleteFavorite(email, placeId);
         return ResponseEntity.ok(SuccessResponseDto.successWithoutData("즐겨찾기가 삭제되었습니다."));

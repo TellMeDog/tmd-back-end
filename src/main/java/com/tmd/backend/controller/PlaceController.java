@@ -36,7 +36,7 @@ public class PlaceController {
         @Parameter(description = "사용자 현재 위도 좌표", example = "37.1234") @RequestParam double currMapY,
         @Parameter(description = "검색할 카테고리", example = "카페") @RequestParam String category,
         @Parameter(description = "조회할 반려동물 ID", example = "1") @RequestParam Long petId,
-        @AuthenticationPrincipal(expression = "username") String email) {
+        @AuthenticationPrincipal String email) {
 
         log.info("장소 목록 조회: bounds=({},{})~({},{}), petId={}, category={}", swLat, swLng, neLat, neLng, petId, category);
 
@@ -65,7 +65,7 @@ public class PlaceController {
         @Parameter(description = "조회할 반려동물 ID", example = "1") @RequestParam Long petId,
         @Parameter(description = "조회할 반려동물 ID", example = "1") @RequestParam double currMapX,
         @Parameter(description = "조회할 반려동물 ID", example = "1") @RequestParam double currMapY,
-        @AuthenticationPrincipal(expression = "username") String email) {
+        @AuthenticationPrincipal String email) {
 
         log.info("키워드 장소 검색: keyword={}, petID={}, email={}, 현재좌표: {}, {}", keyword, petId, email, currMapX, currMapY);
 
@@ -85,7 +85,7 @@ public class PlaceController {
         @Parameter(description = "조회할 반려동물 ID", example = "1") @RequestParam Long petId,
         @Parameter(description = "사용자 현재 경도 좌표", example = "127.1234") @RequestParam double currMapX,
         @Parameter(description = "사용자 현재 위도 좌표", example = "37.1234") @RequestParam double currMapY,
-        @AuthenticationPrincipal(expression = "username") String email){
+        @AuthenticationPrincipal String email){
         log.info("지역 기반 장소 검색: 시도 이름 = {}, 시군구 이름 = {}, petId = {}, email = {}", lDongRegnNm, lDongSignguNm, petId, email);
         List<PlaceMarkerResponse> response = placeService.searchByRegion(lDongRegnNm, lDongSignguNm, petId, email, currMapX, currMapY);
 
@@ -106,7 +106,7 @@ public class PlaceController {
         @RequestParam(defaultValue = "10") int reviewSize,
         @Parameter(description = "리뷰 정렬 옵션", example = "latest")
         @RequestParam(defaultValue = "latest") String reviewSort,
-        @AuthenticationPrincipal(expression = "username") String email) {
+        @AuthenticationPrincipal String email) {
 
         log.info("장소 상세 조회: placeId={}, petId={}", placeId, petId);
 

@@ -29,7 +29,7 @@ public class PetController {
     )
     @GetMapping
     public ResponseEntity<SuccessResponseDto<List<PetResponse>>> getPetsList(
-        @AuthenticationPrincipal(expression = "username") String email
+        @AuthenticationPrincipal String email
     ) {
         return ResponseEntity.ok(SuccessResponseDto.success(
             "반려견 목록을 조회했습니다.", petService.getPets(email)));
@@ -42,7 +42,7 @@ public class PetController {
     @PostMapping
     public ResponseEntity<SuccessResponseDto<List<PetResponse>>> registerPets(
         @Valid @RequestBody List<PetRegisterRequest> requests,
-        @AuthenticationPrincipal(expression = "username") String email
+        @AuthenticationPrincipal String email
     ) {
         return ResponseEntity.ok(SuccessResponseDto.success(
             "반려견 정보를 등록했습니다.", petService.registerPets(email, requests)));
@@ -56,7 +56,7 @@ public class PetController {
     public ResponseEntity<SuccessResponseDto<PetResponse>> updatePet(
         @Parameter(description = "반려견 ID", example = "1") @PathVariable Long petId,
         @Valid @RequestBody PetUpdateRequest request,
-        @AuthenticationPrincipal(expression = "username") String email
+        @AuthenticationPrincipal String email
     ) {
         return ResponseEntity.ok(SuccessResponseDto.success(
             "반려견 정보를 수정했습니다.", petService.updatePet(email, petId, request)));
@@ -69,7 +69,7 @@ public class PetController {
     @DeleteMapping("/{petId}")
     public ResponseEntity<SuccessResponseDto<Void>> deletePet(
         @Parameter(description = "반려견 ID", example = "1") @PathVariable Long petId,
-        @AuthenticationPrincipal(expression = "username") String email
+        @AuthenticationPrincipal String email
     ) {
         petService.deletePet(email, petId);
         return ResponseEntity.ok(SuccessResponseDto.successWithoutData("반려견 정보를 삭제했습니다."));

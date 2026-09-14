@@ -33,7 +33,7 @@ public class ImageController {
     @PostMapping("/presigned-url")
     public ResponseEntity<SuccessResponseDto<PresignedUrlResponse>> getPresignedUrl(
         @Valid @RequestBody PresignedUrlRequest request,
-        @AuthenticationPrincipal(expression = "username") String email
+        @AuthenticationPrincipal String email
     ) {
         return ResponseEntity.ok(SuccessResponseDto.success(
             "업로드 URL을 발급했습니다.", imageService.initiateUpload(email, request)));
@@ -46,7 +46,7 @@ public class ImageController {
     @PostMapping("/uploads/{uploadId}/complete")
     public ResponseEntity<SuccessResponseDto<ImageUploadCompleteResponse>> completeUpload(
         @PathVariable UUID uploadId,
-        @AuthenticationPrincipal(expression = "username") String email
+        @AuthenticationPrincipal String email
     ) {
         return ResponseEntity.ok(SuccessResponseDto.success(
             "이미지 업로드를 완료했습니다.", imageService.completeUpload(email, uploadId)));
