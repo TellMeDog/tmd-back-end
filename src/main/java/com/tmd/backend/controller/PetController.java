@@ -5,27 +5,28 @@ import com.tmd.backend.dto.request.pet.PetUpdateRequest;
 import com.tmd.backend.dto.response.SuccessResponseDto;
 import com.tmd.backend.dto.response.pet.PetResponse;
 import com.tmd.backend.service.PetService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "Pet", description = "반려동물 API")
 @RestController
 @RequestMapping("/pets")
 @RequiredArgsConstructor
 public class PetController {
     private final PetService petService;
 
+    @Operation(
+        summary = "반려동물 조회",
+        description = "내 반려동물 조회시 사용할 API"
+    )
     @GetMapping
     public ResponseEntity<SuccessResponseDto<List<PetResponse>>> getPetsList(
         @AuthenticationPrincipal(expression = "username") String email
@@ -34,6 +35,10 @@ public class PetController {
             "반려견 목록을 조회했습니다.", petService.getPets(email)));
     }
 
+    @Operation(
+        summary = "반려동물 추가",
+        description = "내 반려동물 추가시 사용할 API"
+    )
     @PostMapping
     public ResponseEntity<SuccessResponseDto<List<PetResponse>>> registerPets(
         @Valid @RequestBody List<PetRegisterRequest> requests,
@@ -43,9 +48,13 @@ public class PetController {
             "반려견 정보를 등록했습니다.", petService.registerPets(email, requests)));
     }
 
+    @Operation(
+        summary = "반려동물 수정",
+        description = "내 반려동물 수정시 사용할 API"
+    )
     @PatchMapping("/{petId}")
     public ResponseEntity<SuccessResponseDto<PetResponse>> updatePet(
-        @PathVariable Long petId,
+        @Parameter(description = "반려견 ID", example = "1") @PathVariable Long petId,
         @Valid @RequestBody PetUpdateRequest request,
         @AuthenticationPrincipal(expression = "username") String email
     ) {
@@ -53,9 +62,13 @@ public class PetController {
             "반려견 정보를 수정했습니다.", petService.updatePet(email, petId, request)));
     }
 
+    @Operation(
+        summary = "반려동물 삭제",
+        description = "내 반려동물 삭제시 사용할 API"
+    )
     @DeleteMapping("/{petId}")
     public ResponseEntity<SuccessResponseDto<Void>> deletePet(
-        @PathVariable Long petId,
+        @Parameter(description = "반려견 ID", example = "1") @PathVariable Long petId,
         @AuthenticationPrincipal(expression = "username") String email
     ) {
         petService.deletePet(email, petId);

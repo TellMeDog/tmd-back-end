@@ -27,7 +27,7 @@ public class ReviewController {
     @Operation(
         summary = "리뷰 작성",
         description = "장소에 대한 리뷰를 작성합니다.")
-    @PostMapping("/places/{placeId}/reviews")
+    @PostMapping("/reviews/{placeId}")
     public ResponseEntity<SuccessResponseDto<Void>> createReview(
         @Parameter(description = "장소 ID", example = "1") @PathVariable Long placeId,
         @RequestBody @Valid ReviewCreateRequest request,
@@ -65,7 +65,7 @@ public class ReviewController {
     @Operation(
         summary = "리뷰 리스트 조회 (무한 스크롤링, 페이지)",
         description = "장소 클릭 이후 추가로 리뷰를 요청할때 사용하는 API")
-    @GetMapping("/places/{placeId}/reviews")
+    @GetMapping("/reviews/{placeId}")
     public ResponseEntity<SuccessResponseDto<PageResponse<ReviewDetailResponse>>> getPlaceReviews(
         @PathVariable Long placeId,
         @RequestParam(defaultValue = "0") int page,
