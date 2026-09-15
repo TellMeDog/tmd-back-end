@@ -21,6 +21,7 @@ public class CacheConfig {
 
         return RedisCacheManager.builder(connectionFactory)
             .cacheDefaults(config)
+            .transactionAware()
             .build();
     }
 }

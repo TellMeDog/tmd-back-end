@@ -47,6 +47,7 @@ class ReviewServiceTest {
     @Mock ReviewRepository reviewRepository;
     @Mock CacheManager cacheManager;
     @Mock ImageService imageService;
+    @Mock MarkerColorService markerColorService;
 
     @InjectMocks ReviewService reviewService;
 
@@ -223,6 +224,23 @@ class ReviewServiceTest {
     }
 
     @Test
+    void getAverageRatings_장소별평균을한번에반환() {
+        given(reviewRepository.findAverageRatingsByPlaceIds(List.of(1L, 2L, 3L)))
+            .willReturn(List.of(new Object[]{1L, 4.5}, new Object[]{3L, 2.0}));
+
+        var result = reviewService.getAverageRatings(List.of(1L, 2L, 3L));
+
+        assertThat(result).containsEntry(1L, 4.5).containsEntry(3L, 2.0);
+        assertThat(result).doesNotContainKey(2L);
+    }
+
+    @Test
+    void getAverageRatings_빈목록이면DB를조회하지않음() {
+        assertThat(reviewService.getAverageRatings(List.of())).isEmpty();
+        verifyNoInteractions(reviewRepository);
+    }
+
+    @Test
     @DisplayName("평점순 리뷰 페이지는 안정적인 보조 정렬과 페이지 정보를 사용한다")
     void getPlaceReviewList_평점순정렬과페이지정보() {
         given(reviewRepository.findByPlaceIdExcludingUser(anyLong(), anyString(), any(Pageable.class)))
@@ -268,5 +286,20 @@ class ReviewServiceTest {
                 .isEqualTo(ErrorCode.VALIDATION_ERROR));
 
         verifyNoInteractions(reviewRepository);
+    }
+
+    @Test
+    void getMyReviewListInMyPage_페이지크기검증() {
+        assertThatThrownBy(() -> reviewService.getMyReviewListInMyPage(
+            1L,
+            "test@email.com",
+            -1,
+            10
+        ))
+            .isInstanceOf(BaseException.class)
+            .satisfies(e -> assertThat(((BaseException) e).getErrorCode())
+                .isEqualTo(ErrorCode.VALIDATION_ERROR));
+
+        verifyNoInteractions(petRepository, reviewRepository);
     }
 }

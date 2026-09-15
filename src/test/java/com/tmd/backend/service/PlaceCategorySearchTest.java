@@ -19,6 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -55,6 +56,8 @@ class PlaceCategorySearchTest {
             .willReturn(Optional.of(pet));
         given(markerColorService.calculateMarkerColor(null, pet))
             .willReturn(MarkerColor.GREY);
+        given(reviewService.getAverageRatings(List.of(2L, 1L)))
+            .willReturn(Map.of(1L, 4.5));
         given(placeRepository.findPlacesWithCategory(
             37.0, 127.0, 38.0, 128.0, "FD", "FD05", null
         )).willReturn(List.of(farPlace, nearPlace));
@@ -67,6 +70,8 @@ class PlaceCategorySearchTest {
 
         assertThat(result).extracting(PlaceMarkerResponse::getPlaceId)
             .containsExactly(1L, 2L);
+        assertThat(result).extracting(PlaceMarkerResponse::getAverageRating)
+            .containsExactly(4.5, 0.0);
         verifyNoInteractions(tourApiClient);
     }
 

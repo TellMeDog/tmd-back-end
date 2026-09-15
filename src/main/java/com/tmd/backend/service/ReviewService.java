@@ -20,6 +20,7 @@ import com.tmd.backend.exception.BaseException;
 import com.tmd.backend.repository.PetRepository;
 import com.tmd.backend.repository.PlaceRepository;
 import com.tmd.backend.repository.ReviewRepository;
+import com.tmd.backend.repository.ReviewVisitStatsProjection;
 import com.tmd.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -83,13 +84,16 @@ public class ReviewService {
 
         Review review = reviewRepository.findByIdAndUserEmail(reviewId, email)
             .orElseThrow(() -> new BaseException(ErrorCode.REVIEW_NOT_FOUND));
+
         Long placeId = review.getPlace().getId();
 
         if (request.isRemoveImage() && request.getImageUploadId() != null) {
             throw new BaseException(ErrorCode.INVALID_IMAGE_UPLOAD);
         }
+
         String previousImageKey = review.getImageKey();
         String imageKey = previousImageKey;
+
         if (request.getImageUploadId() != null) {
             imageKey = imageService.attachReadyUpload(
                 email, request.getImageUploadId(), ImageUsage.REVIEW);
@@ -145,11 +149,15 @@ public class ReviewService {
     }
 
     public PageResponse<MyReviewListResponse> getMyReviewListInMyPage(Long petId, String email, int page, int size) {
+        validatePageRequest(page, size);
         Pet pet = petRepository.findByIdAndUserEmail(petId, email)
-            .orElseThrow(() -> new BaseException(ErrorCode.REVIEW_NOT_FOUND));
+            .orElseThrow(() -> new BaseException(ErrorCode.NOT_OWNER_OF_DOG));
 
         Page<Review> reviewPage = reviewRepository.findByUserEmail(email,
-            PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"))); // 최신순
+            PageRequest.of(page, size, Sort.by(
+                Sort.Order.desc("createdAt"),
+                Sort.Order.desc("id")
+            ))); // 최신순
 
         return new PageResponse<>(
             reviewPage.getContent().stream().map(review -> toMyReviewListResponse(review, pet)).toList(),
@@ -174,15 +182,26 @@ public class ReviewService {
         return reviewRepository.findAverageRatingByPlaceId(placeId).orElse(0.0);
     }
 
+    public Map<Long, Double> getAverageRatings(List<Long> placeIds) {
+        if (placeIds.isEmpty()) {
+            return Map.of();
+        }
+        return reviewRepository.findAverageRatingsByPlaceIds(placeIds).stream()
+            .collect(Collectors.toMap(
+                row -> (Long) row[0],
+                row -> (Double) row[1]
+            ));
+    }
+
     @Cacheable(value = "visitStats", key = "#placeId")
     public PlaceDetailResponse.VisitStats getVisitStats(Long placeId) {
-        Map<FeedbackType, Long> counts = reviewRepository.countGroupByFeedbackType(placeId)
-            .stream()
-            .collect(Collectors.toMap(row -> (FeedbackType) row[0], row -> (Long) row[1]));
-
-        String lastReportedAt = reviewRepository.findLastReportedAtByPlaceId(placeId)
-            .map(Object::toString)
-            .orElse(null);
+        ReviewVisitStatsProjection summary = reviewRepository.findVisitStatsSummary(placeId);
+        long enteredCount = valueOrZero(summary.getEnteredCount());
+        long mismatchedCount = valueOrZero(summary.getMismatchedCount());
+        long deniedCount = valueOrZero(summary.getDeniedCount());
+        String lastReportedAt = summary.getLastReportedAt() != null
+            ? summary.getLastReportedAt().toString()
+            : null;
 
         List<String> topBreeds = reviewRepository
             .findTopBreedsByPlaceId(placeId, PageRequest.of(0, 3))
@@ -191,18 +210,16 @@ public class ReviewService {
             .toList();
 
         return PlaceDetailResponse.VisitStats.builder()
-            .enteredCount(counts.getOrDefault(FeedbackType.ENTERED, 0L))
-            .mismatchedCount(counts.getOrDefault(FeedbackType.MISMATCHED_INFO, 0L))
-            .deniedCount(counts.getOrDefault(FeedbackType.DENIED, 0L))
+            .enteredCount(enteredCount)
+            .mismatchedCount(mismatchedCount)
+            .deniedCount(deniedCount)
             .lastReportedAt(lastReportedAt)
             .topBreeds(topBreeds)
             .build();
     }
 
     private PageRequest createReviewPageRequest(int page, int size, String sort) {
-        if (page < 0 || size < 1 || size > 100) {
-            throw new BaseException(ErrorCode.VALIDATION_ERROR);
-        }
+        validatePageRequest(page, size);
 
         Sort sortOption = switch (sort) {
             case "latest" -> Sort.by(
@@ -220,6 +237,16 @@ public class ReviewService {
         return PageRequest.of(page, size, sortOption);
     }
 
+    private void validatePageRequest(int page, int size) {
+        if (page < 0 || size < 1 || size > 100) {
+            throw new BaseException(ErrorCode.VALIDATION_ERROR);
+        }
+    }
+
+    private long valueOrZero(Long value) {
+        return value != null ? value : 0L;
+    }
+
     private ReviewDetailResponse toReviewDetailResponse(Review review) {
         Pet pet = review.getPet();
         return ReviewDetailResponse.builder()
@@ -229,7 +256,7 @@ public class ReviewService {
             .petId(pet != null ? pet.getId() : null)
             .petName(pet != null ? pet.getName() : null)
             .feedbackType(review.getFeedbackType())
-            .mismatchReasons(review.getMismatchReasons())
+            .mismatchReasons(List.copyOf(review.getMismatchReasons()))
             .etcReason(review.getEtcReason())
             .rating(review.getRating())
             .content(review.getContent())

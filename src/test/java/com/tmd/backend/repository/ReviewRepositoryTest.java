@@ -1,8 +1,10 @@
 package com.tmd.backend.repository;
 
+import com.tmd.backend.ai.AccessScope;
 import com.tmd.backend.domain.pet.Pet;
 import com.tmd.backend.domain.pet.PetBreed;
 import com.tmd.backend.domain.place.Place;
+import com.tmd.backend.domain.place.PlacePetPolicy;
 import com.tmd.backend.domain.review.FeedbackType;
 import com.tmd.backend.domain.review.Review;
 import com.tmd.backend.domain.user.User;
@@ -10,6 +12,7 @@ import com.tmd.backend.config.QuerydslConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
@@ -94,6 +97,28 @@ class ReviewRepositoryTest {
         assertThat(result.get()).isEqualTo(3.0);
     }
 
+    @Test
+    void findAverageRatingsByPlaceIds_장소별평균집계() {
+        Place otherPlace = em.persist(Place.create(
+            "CONTENT002", null, "서울시", null, "다른 장소",
+            127.01, 37.49, null, null, null,
+            null, null, "FD", "FD05", null
+        ));
+        em.persist(review(FeedbackType.ENTERED, 4));
+        em.persist(review(FeedbackType.ENTERED, 2));
+        em.persist(review(user, otherPlace, FeedbackType.ENTERED, 5));
+        em.flush();
+
+        List<Object[]> result = reviewRepository.findAverageRatingsByPlaceIds(
+            List.of(place.getId(), otherPlace.getId())
+        );
+        Map<Long, Double> ratings = result.stream()
+            .collect(Collectors.toMap(row -> (Long) row[0], row -> (Double) row[1]));
+
+        assertThat(ratings).containsEntry(place.getId(), 3.0);
+        assertThat(ratings).containsEntry(otherPlace.getId(), 5.0);
+    }
+
     // ===== countGroupByFeedbackType =====
 
     @Test
@@ -104,13 +129,12 @@ class ReviewRepositoryTest {
         em.persist(review(FeedbackType.DENIED, 1));
         em.flush();
 
-        List<Object[]> rows = reviewRepository.countGroupByFeedbackType(place.getId());
-        Map<FeedbackType, Long> counts = rows.stream()
-            .collect(Collectors.toMap(r -> (FeedbackType) r[0], r -> (Long) r[1]));
+        ReviewVisitStatsProjection summary = reviewRepository.findVisitStatsSummary(place.getId());
 
-        assertThat(counts.get(FeedbackType.ENTERED)).isEqualTo(2L);
-        assertThat(counts.get(FeedbackType.DENIED)).isEqualTo(1L);
-        assertThat(counts.containsKey(FeedbackType.MISMATCHED_INFO)).isFalse();
+        assertThat(summary.getEnteredCount()).isEqualTo(2L);
+        assertThat(summary.getMismatchedCount()).isZero();
+        assertThat(summary.getDeniedCount()).isEqualTo(1L);
+        assertThat(summary.getLastReportedAt()).isNotNull();
     }
 
     // ===== findLastReportedAtByPlaceId =====
@@ -121,16 +145,20 @@ class ReviewRepositoryTest {
         Review review = em.persist(review(FeedbackType.ENTERED, 3));
         em.flush();
 
-        var result = reviewRepository.findLastReportedAtByPlaceId(place.getId());
+        ReviewVisitStatsProjection result = reviewRepository.findVisitStatsSummary(place.getId());
 
-        assertThat(result).isPresent();
-        assertThat(result.orElseThrow()).isEqualToIgnoringNanos(review.getCreatedAt());
+        assertThat(result.getLastReportedAt()).isEqualToIgnoringNanos(review.getCreatedAt());
     }
 
     @Test
     @DisplayName("리뷰가 없으면 최근 작성 시각은 empty")
     void findLastReportedAtByPlaceId_리뷰없으면_empty() {
-        assertThat(reviewRepository.findLastReportedAtByPlaceId(place.getId())).isEmpty();
+        ReviewVisitStatsProjection result = reviewRepository.findVisitStatsSummary(place.getId());
+
+        assertThat(result.getEnteredCount()).isNull();
+        assertThat(result.getMismatchedCount()).isNull();
+        assertThat(result.getDeniedCount()).isNull();
+        assertThat(result.getLastReportedAt()).isNull();
     }
 
     @Test
@@ -171,6 +199,24 @@ class ReviewRepositoryTest {
         assertThat(page.getTotalElements()).isEqualTo(3);
         assertThat(page.getContent()).hasSize(2);
         assertThat(page.getTotalPages()).isEqualTo(2);
+    }
+
+    @Test
+    void findByUserEmail_장소와정책을함께조회() {
+        em.persist(PlacePetPolicy.builder()
+            .place(place)
+            .accessScope(AccessScope.ALL)
+            .build());
+        em.persist(review(FeedbackType.ENTERED, 4));
+        em.flush();
+        em.clear();
+
+        Review result = reviewRepository.findByUserEmail(
+            "test@email.com", PageRequest.of(0, 10)
+        ).getContent().getFirst();
+
+        assertThat(Hibernate.isInitialized(result.getPlace())).isTrue();
+        assertThat(Hibernate.isInitialized(result.getPlace().getPlacePetPolicy())).isTrue();
     }
 
     @Test

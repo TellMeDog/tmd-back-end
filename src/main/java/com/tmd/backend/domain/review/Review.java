@@ -8,12 +8,18 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.BatchSize;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
+@Table(indexes = {
+    @Index(name = "idx_review_place_created", columnList = "place_id, created_at, id"),
+    @Index(name = "idx_review_place_rating", columnList = "place_id, rating, created_at, id"),
+    @Index(name = "idx_review_user_created", columnList = "user_id, created_at, id")
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Review {
@@ -36,6 +42,7 @@ public class Review {
     @Enumerated(EnumType.STRING)
     private FeedbackType feedbackType;
 
+    @BatchSize(size = 50)
     @ElementCollection
     @CollectionTable(name = "review_mismatch_reason", joinColumns = @JoinColumn(name = "review_id"))
     @Enumerated(EnumType.STRING)
