@@ -5,6 +5,8 @@ package com.tmd.backend.controller;
 import com.tmd.backend.dto.response.SuccessResponseDto;
 import com.tmd.backend.dto.response.user.UserResponse;
 import com.tmd.backend.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -14,8 +16,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-
 @Slf4j
+@Tag(name = "내 정보", description = "내 정보 관련 API")
 @RequiredArgsConstructor
 @RequestMapping("/users")
 // 이 컨트롤러의 모든 API는 "/users"로 시작함
@@ -29,6 +31,10 @@ public class UserController {
     private final UserService userService;
     // Service를 주입받음. @RequiredArgsConstructor가 생성자 자동으로 만들어줌
 
+    @Operation(
+        summary = "마이페이지 호출",
+        description = "마이페이지 클릭시 petId List를 넘겨줍니다."
+    )
     @GetMapping("/me")
     // GET 방식으로 "/users/me" 요청이 오면 아래 메서드가 실행됨
 

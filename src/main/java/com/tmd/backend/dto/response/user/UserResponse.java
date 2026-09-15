@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 // 클래스 안 모든 private 필드에 대해 자동으로 getter 메서드를 만들어줌 (읽기만 가능하고 수정은 안 됨)
 @Getter
@@ -21,9 +22,11 @@ public class UserResponse {      // Controller가 이 클래스를 써야 하니
     private String nickname;  // [수정] 필드 추가: 마이페이지 조회 시 닉네임도 보여주기 위함
     private String provider;
     private LocalDateTime createdAt;
+    private List<Long> petIds;
 
     @Builder
-    public UserResponse(Long id, String email, String nickname, String provider, LocalDateTime createdAt) {      // 이 4개 값을 받아서 UserResponse 객체 하나 만드는 법 정의
+    public UserResponse(Long id, String email, String nickname, String provider, LocalDateTime createdAt,
+                        List<Long> petIds) {
         // 생성자 안의 대입문 (실제로 서랍에 물건 넣기)
         // [수정] 매개변수에 nickname 추가
 
@@ -32,5 +35,6 @@ public class UserResponse {      // Controller가 이 클래스를 써야 하니
         this.nickname = nickname;  // [수정] nickname 대입 추가
         this.provider = provider;
         this.createdAt = createdAt;
+        this.petIds = petIds;
     }
 }

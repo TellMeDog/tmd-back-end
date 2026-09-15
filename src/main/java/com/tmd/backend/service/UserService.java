@@ -54,6 +54,7 @@ public class UserService {
             // 결과는 Optional<User> (있을 수도, 없을 수도 있는 상태)
 
             .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+        List<Long> petIds = petRepository.findIdsByUserId(user.getId());
         // 만약 Optional이 비어있으면(못 찾았으면) USER_NOT_FOUND 에러를 던지고 메서드 실행을 중단함
         // 찾았으면 User 객체가 그대로 user 변수에 저장됨
 
@@ -74,6 +75,7 @@ public class UserService {
             // UserResponse의 provider 필드가 String 타입이라 이렇게 변환 필요
 
             .createdAt(user.getCreatedAt())
+            .petIds(petIds)
             // user 객체에서 가입일시 값을 꺼내서 그대로 넣음
 
             .build();
