@@ -18,7 +18,7 @@ public class SignUpRequest {
     private String email;
 
     @NotEmpty(message = "비밀번호를 입력해주세요.")
-    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,16}$",
+    @Pattern(regexp = "^(?=.*[a-z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,16}$",
         message = "비밀번호는 8~16자 영문 대소문자, 숫자, 특수문자를 최소 1개씩 포함해야 합니다.")
     private String password;
 
