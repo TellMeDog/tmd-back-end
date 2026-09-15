@@ -52,7 +52,7 @@ public class PetController {
         summary = "반려동물 수정",
         description = "내 반려동물 수정시 사용할 API"
     )
-    @PatchMapping("/{petId}")
+    @PutMapping("/{petId}")
     public ResponseEntity<SuccessResponseDto<PetResponse>> updatePet(
         @Parameter(description = "반려견 ID", example = "1") @PathVariable Long petId,
         @Valid @RequestBody PetUpdateRequest request,
