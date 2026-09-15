@@ -82,15 +82,16 @@ public class ReviewController {
     @Operation(
         summary = "내 리뷰 목록 조회",
         description = "마이페이지에서 내 리뷰 목록을 조회합니다.")
-    @GetMapping("/reviews")
+    @GetMapping("/reviews/mypage/{petId}")
     public ResponseEntity<SuccessResponseDto<PageResponse<MyReviewListResponse>>> getMyReviews(
+        @Parameter(description = "반려견 ID", example = "1") @PathVariable Long petId,
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size,
         @AuthenticationPrincipal String email) {
 
         return ResponseEntity.ok(SuccessResponseDto.success(
             "내 리뷰 목록을 조회했습니다.",
-            reviewService.getMyReviewListInMyPage(email, page, size)
+            reviewService.getMyReviewListInMyPage(petId, email, page, size)
         ));
     }
 }

@@ -1,6 +1,7 @@
 package com.tmd.backend.service;
 
 import com.tmd.backend.common.ErrorCode;
+import com.tmd.backend.common.MarkerColor;
 import com.tmd.backend.domain.image.ImageUsage;
 import com.tmd.backend.domain.pet.Pet;
 import com.tmd.backend.domain.pet.PetBreed;
@@ -46,6 +47,7 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final CacheManager cacheManager;
     private final ImageService imageService;
+    private final MarkerColorService markerColorService;
 
     @Transactional
     public void createReview(String email, Long placeId, ReviewCreateRequest request) {
@@ -142,12 +144,15 @@ public class ReviewService {
         );
     }
 
-    public PageResponse<MyReviewListResponse> getMyReviewListInMyPage(String email, int page, int size) {
+    public PageResponse<MyReviewListResponse> getMyReviewListInMyPage(Long petId, String email, int page, int size) {
+        Pet pet = petRepository.findByIdAndUserEmail(petId, email)
+            .orElseThrow(() -> new BaseException(ErrorCode.REVIEW_NOT_FOUND));
+
         Page<Review> reviewPage = reviewRepository.findByUserEmail(email,
             PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"))); // 최신순
 
         return new PageResponse<>(
-            reviewPage.getContent().stream().map(this::toMyReviewListResponse).toList(),
+            reviewPage.getContent().stream().map(review -> toMyReviewListResponse(review, pet)).toList(),
             reviewPage.getNumber(),
             reviewPage.getSize(),
             reviewPage.getTotalElements(),
@@ -233,7 +238,8 @@ public class ReviewService {
             .build();
     }
 
-    private MyReviewListResponse toMyReviewListResponse(Review review) {
+    private MyReviewListResponse toMyReviewListResponse(Review review, Pet pet) {
+        MarkerColor color = markerColorService.calculateMarkerColor(review.getPlace().getPlacePetPolicy(), pet);
         return MyReviewListResponse.builder()
             .reviewId(review.getId())
             .placeId(review.getPlace().getId())
@@ -241,7 +247,7 @@ public class ReviewService {
             .placeAddr1(review.getPlace().getAddr1())
             .placeAddr2(review.getPlace().getAddr2())
             .imageKey(review.getPlace().getFirstImage())
-            .markerColor("GREEN") // TODO: 마커 판정 로직 후 채울 것
+            .markerColor(color.name())
             .build();
     }
 
