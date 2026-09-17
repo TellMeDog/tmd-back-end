@@ -41,6 +41,9 @@ public class PlacePetPolicy {
 
     private String defaultPolicy; // YELLOW OR NULL
 
+    @Column(nullable = false, columnDefinition = "bit default 0")
+    private Boolean reviewPending = false;
+
     @Builder
     private PlacePetPolicy(Place place, AccessScope accessScope, Boolean allBreedsAllowed, Boolean dangerousBreedAllowed, String dangerousBreedAllowedCondition, Double maxWeightKg, WeightLimitType weightLimitType, Boolean leashRequired, Boolean muzzleRequired, Boolean kennelRequired, Boolean advanceInquiryRequired, Integer maxPetCount, String defaultPolicy) {
         this.place = place;
@@ -74,5 +77,25 @@ public class PlacePetPolicy {
             .maxPetCount(analysis.maxPetCount())
             .defaultPolicy(analysis.defaultPolicy())
             .build();
+    }
+
+    public void update(PetPolicyAnalysis analysis) {
+        this.accessScope = analysis.accessScope();
+        this.allBreedsAllowed = analysis.allBreedsAllowed();
+        this.dangerousBreedAllowed = analysis.dangerousBreedAllowed();
+        this.dangerousBreedAllowedCondition = analysis.dangerousBreedAllowedCondition();
+        this.maxWeightKg = analysis.maxWeightKg();
+        this.weightLimitType = analysis.weightLimitType();
+        this.leashRequired = analysis.leashRequired();
+        this.muzzleRequired = analysis.muzzleRequired();
+        this.kennelRequired = analysis.kennelRequired();
+        this.advanceInquiryRequired = analysis.advanceInquiryRequired();
+        this.maxPetCount = analysis.maxPetCount();
+        this.defaultPolicy = analysis.defaultPolicy();
+        this.reviewPending = false;
+    }
+
+    public void markReviewPending() {
+        this.reviewPending = true;
     }
 }

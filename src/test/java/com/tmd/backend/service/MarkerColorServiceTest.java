@@ -119,6 +119,17 @@ class MarkerColorServiceTest {
     }
 
     @Test
+    void 검토대기_정책이면_YELLOW다() {
+        PlacePetPolicy policy = policy(AccessScope.ALL);
+        when(policy.getReviewPending()).thenReturn(true);
+
+        assertThat(service.calculateMarkerColor(
+            policy,
+            pet(PetBreed.MALTESE, 5.0, true, true, true)
+        )).isEqualTo(MarkerColor.YELLOW);
+    }
+
+    @Test
     void 해석할_수_없는_체중이나_맹견조건이면_YELLOW다() {
         PlacePetPolicy weightPolicy = weightPolicy(10.0, WeightLimitType.UNKNOWN);
         PlacePetPolicy breedPolicy = policy(AccessScope.ALL);

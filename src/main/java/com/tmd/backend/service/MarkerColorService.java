@@ -82,7 +82,8 @@ public class MarkerColorService {
     }
 
     private boolean requiresAdditionalConfirmation(PlacePetPolicy policy, Pet pet) {
-        if ("YELLOW".equals(policy.getDefaultPolicy())
+        if (Boolean.TRUE.equals(policy.getReviewPending())
+            || "YELLOW".equals(policy.getDefaultPolicy())
             || policy.getAccessScope() == AccessScope.PARTIAL
             || Boolean.TRUE.equals(policy.getAdvanceInquiryRequired())) {
             return true;

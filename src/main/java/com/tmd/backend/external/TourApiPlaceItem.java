@@ -16,6 +16,7 @@ public class TourApiPlaceItem {
     private String firstimage;
     private String firstimage2;
     private String modifiedtime; // 최근 수정일
+    private String showflag;
     private String lDongRegnCd; // 시,도
     private String lDongSignguCd; // 시군구
     private String lclsSystm1;

@@ -73,4 +73,17 @@ public class PlacePetInfo {
             .status(status)
             .build();
     }
+
+    public void update(TourApiPetInfoItem item, PetInfoStatus status) {
+        this.acmpyTypeCd = item == null ? null : item.getAcmpyTypeCd();
+        this.acmpyPsblCpam = item == null ? null : item.getAcmpyPsblCpam();
+        this.acmpyNeedMtr = item == null ? null : item.getAcmpyNeedMtr();
+        this.relaAcdntRiskMtr = item == null ? null : item.getRelaAcdntRiskMtr();
+        this.relaPosesFclty = item == null ? null : item.getRelaPosesFclty();
+        this.relaFrnshPrdlst = item == null ? null : item.getRelaFrnshPrdlst();
+        this.relaPurcPrdlst = item == null ? null : item.getRelaPurcPrdlst();
+        this.relaRntlPrdlst = item == null ? null : item.getRelaRntlPrdlst();
+        this.etcAcmpyInfo = item == null ? null : item.getEtcAcmpyInfo();
+        this.status = status;
+    }
 }

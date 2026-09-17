@@ -16,6 +16,8 @@ import java.util.List;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Place {
+    private static final String UNKNOWN_SOURCE_VERSION = "UNKNOWN";
+
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
@@ -31,6 +33,10 @@ public class Place {
     private String firstImage;
     private String firstImage2;
     private String modifiedTime;
+    private String petInfoSyncedModifiedTime;
+
+    @Column(nullable = false, columnDefinition = "bit default 1")
+    private Boolean active = true;
     private String lDongRegnCd; // 시,도
     private String lDongSignguCd; // 시군구
     private String lclsSystm1;
@@ -100,5 +106,56 @@ public class Place {
             .lclsSystm2(item.getLclsSystm2())
             .lclsSystm3(item.getLclsSystm3())
             .build();
+    }
+
+    public boolean needsPetInfoSync(String sourceModifiedTime) {
+        return petInfoSyncedModifiedTime == null
+            || !petInfoSyncedModifiedTime.equals(syncVersion(sourceModifiedTime));
+    }
+
+    public void updateFrom(TourApiPlaceItem item) {
+        this.zipCode = item.getZipcode();
+        this.addr1 = item.getAddr1();
+        this.addr2 = item.getAddr2();
+        this.title = item.getTitle();
+        this.mapX = NumberUtils.toDouble(item.getMapx());
+        this.mapY = NumberUtils.toDouble(item.getMapy());
+        this.firstImage = item.getFirstimage();
+        this.firstImage2 = item.getFirstimage2();
+        this.modifiedTime = item.getModifiedtime();
+        this.lDongRegnCd = item.getLDongRegnCd();
+        this.lDongSignguCd = item.getLDongSignguCd();
+        this.lclsSystm1 = item.getLclsSystm1();
+        this.lclsSystm2 = item.getLclsSystm2();
+        this.lclsSystm3 = item.getLclsSystm3();
+        this.active = !"0".equals(item.getShowflag());
+    }
+
+    public void initializePetInfoSyncVersionIfUnchanged(String previousModifiedTime) {
+        if (petInfoSyncedModifiedTime == null
+            && placePetInfo != null
+            && java.util.Objects.equals(previousModifiedTime, modifiedTime)) {
+            petInfoSyncedModifiedTime = syncVersion(modifiedTime);
+        }
+    }
+
+    public void markPetInfoSynced() {
+        this.petInfoSyncedModifiedTime = syncVersion(modifiedTime);
+    }
+
+    public void requestPetInfoSync() {
+        this.petInfoSyncedModifiedTime = null;
+    }
+
+    public void deactivate() {
+        this.active = false;
+    }
+
+    public boolean isActive() {
+        return active == null || active;
+    }
+
+    private static String syncVersion(String sourceModifiedTime) {
+        return sourceModifiedTime == null ? UNKNOWN_SOURCE_VERSION : sourceModifiedTime;
     }
 }

@@ -21,6 +21,13 @@ public class TourApiResponse<T> {
     @NoArgsConstructor
     public static class ResponseBody<T>{
         private Items<T> items;
+        private Integer numOfRows;
+        private Integer pageNo;
+        private Integer totalCount;
+
+        public List<T> itemList() {
+            return items == null || items.getItem() == null ? List.of() : items.getItem();
+        }
     }
     @Getter
     @NoArgsConstructor

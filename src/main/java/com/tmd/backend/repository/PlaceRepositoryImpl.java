@@ -28,6 +28,7 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom{
             .selectFrom(place)
             .leftJoin(place.placePetPolicy, placePetPolicy).fetchJoin()
             .where(
+                activePlace(),
                 place.mapX.between(swLng, neLng),
                 place.mapY.between(swLat, neLat),
                 lclsSystm1Eq(lclsSystm1),
@@ -41,7 +42,7 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom{
         return jpaQueryFactory
             .selectFrom(place)
             .leftJoin(place.placePetInfo, placePetInfo).fetchJoin()
-            .where(place.title.contains(keyword))
+            .where(activePlace(), place.title.contains(keyword))
             .fetch();
     }
 
@@ -51,6 +52,7 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom{
             .selectFrom(place)
             .leftJoin(place.placePetInfo, placePetInfo).fetchJoin()
             .where(
+                activePlace(),
                 lDongRegnCdEq(lDongRegnCd),
                 lDongSignguCdEq(lDongSignguCd)
             )
@@ -62,7 +64,7 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom{
         return jpaQueryFactory
             .selectFrom(place)
             .leftJoin(placePetInfo).on(placePetInfo.place.eq(place))
-            .where(placePetInfo.id.isNull())
+            .where(activePlace(), placePetInfo.id.isNull())
             .orderBy(place.id.asc())
             .limit(limit)
             .fetch();
@@ -72,6 +74,10 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom{
         return lDongRegnCd == null
             ? null
             : place.lDongRegnCd.eq(lDongRegnCd);
+    }
+
+    private BooleanExpression activePlace() {
+        return place.active.isTrue().or(place.active.isNull());
     }
 
     private BooleanExpression lDongSignguCdEq(String lDongSignguCd){

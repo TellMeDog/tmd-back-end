@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8&rewriteBatchedStatements=true
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -51,6 +51,20 @@ jwt:
 
 tourapi:
   service-key: ${TOUR_API_SERVICE_KEY}
+  connect-timeout: ${TOUR_API_CONNECT_TIMEOUT:10s}
+  read-timeout: ${TOUR_API_READ_TIMEOUT:180s}
+  sync:
+    enabled: ${TOUR_API_SYNC_ENABLED:false}
+    cron: ${TOUR_API_SYNC_CRON:0 0 5 * * *}
+    zone: ${TOUR_API_SYNC_ZONE:Asia/Seoul}
+    detail-limit: ${TOUR_API_SYNC_DETAIL_LIMIT:500}
+    page-size: ${TOUR_API_SYNC_PAGE_SIZE:11000}
+    arrange: ${TOUR_API_SYNC_ARRANGE:}
+    run-once: ${TOUR_API_SYNC_RUN_ONCE:false}
+
+seed:
+  manual:
+    enabled: ${SEED_MANUAL_ENABLED:false}
 
 cloudflare:
   r2:

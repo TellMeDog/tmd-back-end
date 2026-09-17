@@ -6,6 +6,10 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        jdbc:
+          batch_size: 50
+        order_updates: true
+        order_inserts: true
 
 server:
   port: 8080

@@ -151,6 +151,9 @@ public class PlaceService {
     ) {
         Place place = placeRepository.findById(placeId)
             .orElseThrow(() -> new BaseException(ErrorCode.PLACE_NOT_FOUND));
+        if (!place.isActive()) {
+            throw new BaseException(ErrorCode.PLACE_NOT_FOUND);
+        }
 
         Pet pet = petRepository.findByIdAndUserEmail(petId, email)
             .orElseThrow(() -> new BaseException(ErrorCode.NOT_OWNER_OF_DOG));
