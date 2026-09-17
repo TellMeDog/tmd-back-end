@@ -255,6 +255,23 @@ class ReviewRepositoryTest {
         assertThat(result.getTotalElements()).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("비회원용 장소 리뷰 조회는 모든 사용자의 리뷰를 반환한다")
+    void findByPlaceId_전체리뷰조회() {
+        User otherUser = em.persist(User.createLocal("other@email.com", "encoded-password", "다른사용자"));
+        Review ownReview = em.persist(review(FeedbackType.ENTERED, 5));
+        Review otherReview = em.persist(review(otherUser, place, FeedbackType.ENTERED, 4));
+        em.flush();
+
+        Page<Review> result = reviewRepository.findByPlaceId(
+            place.getId(),
+            PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"))
+        );
+
+        assertThat(result.getContent()).containsExactlyInAnyOrder(ownReview, otherReview);
+        assertThat(result.getTotalElements()).isEqualTo(2);
+    }
+
     // 헬퍼
     private Review review(FeedbackType feedbackType, int rating) {
         return review(user, place, feedbackType, rating);

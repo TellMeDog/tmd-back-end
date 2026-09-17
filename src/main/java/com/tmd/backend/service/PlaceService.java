@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -114,8 +115,7 @@ public class PlaceService {
             throw new BaseException(ErrorCode.PLACE_NOT_FOUND); //TODO: 적절한 ErrorCode 추가할 것.
         }
 
-        Pet pet = petRepository.findByIdAndUserEmail(petId, email)
-            .orElseThrow(() -> new BaseException(ErrorCode.NOT_OWNER_OF_DOG));
+        Pet pet = findPetIfProvided(petId, email);
 
         List<Place> places = placeRepository.findPlacesWithKeyword(trimmedKeyword);
         return toMarkerResponses(places, email, pet, currMapX, currMapY).stream()
@@ -127,8 +127,7 @@ public class PlaceService {
 
     // 지역별 검색 기능
     public List<PlaceMarkerResponse> searchByRegion(String lDongRegnNm, String lDongSignguNm, Long petId, String email, double currMapX, double currMapY){
-        Pet pet = petRepository.findByIdAndUserEmail(petId, email)
-            .orElseThrow(() -> new BaseException(ErrorCode.NOT_OWNER_OF_DOG));
+        Pet pet = findPetIfProvided(petId, email);
 
         Region region = Region.fromName(lDongRegnNm);
         String lDongRegnCd = region.getCode();
@@ -155,8 +154,7 @@ public class PlaceService {
             throw new BaseException(ErrorCode.PLACE_NOT_FOUND);
         }
 
-        Pet pet = petRepository.findByIdAndUserEmail(petId, email)
-            .orElseThrow(() -> new BaseException(ErrorCode.NOT_OWNER_OF_DOG));
+        Pet pet = findPetIfProvided(petId, email);
 
         PlacePetInfo info = place.getPlacePetInfo();
 
@@ -192,7 +190,9 @@ public class PlaceService {
             .modifiedTime(place.getModifiedTime())
             .petPolicyInfo(petPolicyInfo)
             .visitStats(visitStats)
-            .myReviews(reviewService.getMyReviewListInPlace(placeId, email))
+            .myReviews(StringUtils.hasText(email)
+                ? reviewService.getMyReviewListInPlace(placeId, email)
+                : List.of())
             .reviews(reviewService.getPlaceReviewList(placeId, email, 0, reviewSize, reviewSort))
             .build();
     }
@@ -229,7 +229,8 @@ public class PlaceService {
     ) {
         MarkerColor color = markerColorService.calculateMarkerColor(place.getPlacePetPolicy(), pet);
         long distance = calculateDistance(currMapY, currMapX, place.getMapY(), place.getMapX());
-        boolean isFavorite = favoriteService.isFavorite(email, place.getId());
+        boolean isFavorite = StringUtils.hasText(email)
+            && favoriteService.isFavorite(email, place.getId());
         return PlaceMarkerResponse.builder()
             .placeId(place.getId())
             .title(place.getTitle())
@@ -241,6 +242,17 @@ public class PlaceService {
             .markerColor(color.name())
             .averageRating(averageRating)
             .build();
+    }
+
+    private Pet findPetIfProvided(Long petId, String email) {
+        if (petId == null) {
+            return null;
+        }
+        if (!StringUtils.hasText(email)) {
+            throw new BaseException(ErrorCode.NOT_OWNER_OF_DOG);
+        }
+        return petRepository.findByIdAndUserEmail(petId, email)
+            .orElseThrow(() -> new BaseException(ErrorCode.NOT_OWNER_OF_DOG));
     }
 
     private void validateMapBounds(double swLat, double swLng, double neLat, double neLng) {

@@ -32,6 +32,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -132,11 +133,10 @@ public class ReviewService {
         int size,
         String sort
     ) {
-        Page<Review> reviewPage = reviewRepository.findByPlaceIdExcludingUser(
-            placeId,
-            email,
-            createReviewPageRequest(page, size, sort)
-        );
+        PageRequest pageable = createReviewPageRequest(page, size, sort);
+        Page<Review> reviewPage = StringUtils.hasText(email)
+            ? reviewRepository.findByPlaceIdExcludingUser(placeId, email, pageable)
+            : reviewRepository.findByPlaceId(placeId, pageable);
 
         return new PageResponse<>(
             reviewPage.getContent().stream().map(this::toReviewDetailResponse).toList(),

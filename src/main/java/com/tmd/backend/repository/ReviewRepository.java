@@ -53,6 +53,9 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
         Pageable pageable
     );
 
+    @EntityGraph(attributePaths = {"place", "pet"})
+    Page<Review> findByPlaceId(Long placeId, Pageable pageable);
+
     @Query("SELECT AVG(r.rating) FROM Review r WHERE r.place.id = :placeId")
     Optional<Double> findAverageRatingByPlaceId(@Param("placeId") Long placeId);
 

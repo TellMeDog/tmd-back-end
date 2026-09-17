@@ -8,7 +8,6 @@ import com.tmd.backend.domain.pet.PetBreed;
 import com.tmd.backend.domain.place.PlacePetPolicy;
 import org.springframework.stereotype.Service;
 
-import java.util.Objects;
 import java.util.Set;
 
 @Service
@@ -28,7 +27,9 @@ public class MarkerColorService {
     );
 
     public MarkerColor calculateMarkerColor(PlacePetPolicy policy, Pet pet) {
-        Objects.requireNonNull(pet, "pet은 null일 수 없습니다.");
+        if (pet == null) {
+            return MarkerColor.GREY;
+        }
 
         if (policy == null
             || policy.getAccessScope() == null

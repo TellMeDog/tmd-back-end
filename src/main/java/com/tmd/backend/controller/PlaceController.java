@@ -10,6 +10,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -62,10 +64,13 @@ public class PlaceController {
     @GetMapping("/search/keyword")
     public ResponseEntity<SuccessResponseDto<List<PlaceMarkerResponse>>> searchPlaces(
         @Parameter(description = "검색 키워드", example = "용산공원") @RequestParam String keyword,
-        @Parameter(description = "조회할 반려동물 ID", example = "1") @RequestParam Long petId,
-        @Parameter(description = "조회할 반려동물 ID", example = "1") @RequestParam double currMapX,
-        @Parameter(description = "조회할 반려동물 ID", example = "1") @RequestParam double currMapY,
-        @AuthenticationPrincipal String email) {
+        @Parameter(description = "조회할 반려동물 ID (없으면 회색 마커)", example = "1")
+        @RequestParam(required = false) Long petId,
+        @Parameter(description = "사용자 현재 경도 좌표", example = "127.1234") @RequestParam double currMapX,
+        @Parameter(description = "사용자 현재 위도 좌표", example = "37.1234") @RequestParam double currMapY,
+        Authentication authentication) {
+
+        String email = authenticatedEmail(authentication);
 
         log.info("키워드 장소 검색: keyword={}, petID={}, email={}, 현재좌표: {}, {}", keyword, petId, email, currMapX, currMapY);
 
@@ -82,10 +87,13 @@ public class PlaceController {
     public ResponseEntity<SuccessResponseDto<List<PlaceMarkerResponse>>> searchByRegion(
         @Parameter(description = "시도 이름", example = "서울특별시") @PathVariable String lDongRegnNm,
         @Parameter(description = "시군구 이름", example = "강남구") @PathVariable String lDongSignguNm,
-        @Parameter(description = "조회할 반려동물 ID", example = "1") @RequestParam Long petId,
+        @Parameter(description = "조회할 반려동물 ID (없으면 회색 마커)", example = "1")
+        @RequestParam(required = false) Long petId,
         @Parameter(description = "사용자 현재 경도 좌표", example = "127.1234") @RequestParam double currMapX,
         @Parameter(description = "사용자 현재 위도 좌표", example = "37.1234") @RequestParam double currMapY,
-        @AuthenticationPrincipal String email){
+        Authentication authentication) {
+
+        String email = authenticatedEmail(authentication);
         log.info("지역 기반 장소 검색: 시도 이름 = {}, 시군구 이름 = {}, petId = {}, email = {}", lDongRegnNm, lDongSignguNm, petId, email);
         List<PlaceMarkerResponse> response = placeService.searchByRegion(lDongRegnNm, lDongSignguNm, petId, email, currMapX, currMapY);
 
@@ -101,12 +109,15 @@ public class PlaceController {
         @Parameter(description = "장소의 경도", example = "127.1234") @RequestParam double mapX,
         @Parameter(description = "장소의 위도", example = "37.1234") @RequestParam double mapY,
         @Parameter(description = "장소 ID", example = "1") @PathVariable Long placeId,
-        @Parameter(description = "조회할 반려동물 ID", example = "1")@RequestParam Long petId,
+        @Parameter(description = "조회할 반려동물 ID (없으면 회색 마커)", example = "1")
+        @RequestParam(required = false) Long petId,
         @Parameter(description = "첫 리뷰 페이지 크기", example = "10")
         @RequestParam(defaultValue = "10") int reviewSize,
         @Parameter(description = "리뷰 정렬 옵션", example = "latest")
         @RequestParam(defaultValue = "latest") String reviewSort,
-        @AuthenticationPrincipal String email) {
+        Authentication authentication) {
+
+        String email = authenticatedEmail(authentication);
 
         log.info("장소 상세 조회: placeId={}, petId={}", placeId, petId);
 
@@ -121,5 +132,15 @@ public class PlaceController {
         );
 
         return ResponseEntity.ok(SuccessResponseDto.success("장소 상세 정보를 조회했습니다.", response));
+    }
+
+    private String authenticatedEmail(Authentication authentication) {
+        if (authentication == null
+            || !authentication.isAuthenticated()
+            || authentication instanceof AnonymousAuthenticationToken) {
+            return null;
+        }
+        String email = authentication.getName();
+        return email == null || email.isBlank() ? null : email;
     }
 }

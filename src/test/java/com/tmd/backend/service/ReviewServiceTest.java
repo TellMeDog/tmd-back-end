@@ -272,6 +272,19 @@ class ReviewServiceTest {
     }
 
     @Test
+    @DisplayName("비회원 장소 상세에서는 사용자를 제외하지 않고 전체 리뷰를 조회한다")
+    void getPlaceReviewList_비회원_전체조회() {
+        given(reviewRepository.findByPlaceId(eq(1L), any(Pageable.class)))
+            .willReturn(new PageImpl<>(List.of(), PageRequest.of(0, 10), 0));
+
+        reviewService.getPlaceReviewList(1L, null, 0, 10, "latest");
+
+        verify(reviewRepository).findByPlaceId(eq(1L), any(Pageable.class));
+        verify(reviewRepository, never())
+            .findByPlaceIdExcludingUser(anyLong(), anyString(), any(Pageable.class));
+    }
+
+    @Test
     @DisplayName("리뷰 페이지 크기는 1부터 100까지만 허용한다")
     void getPlaceReviewList_페이지크기검증() {
         assertThatThrownBy(() -> reviewService.getPlaceReviewList(

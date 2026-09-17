@@ -17,6 +17,12 @@ class MarkerColorServiceTest {
     private final MarkerColorService service = new MarkerColorService();
 
     @Test
+    void 반려동물이_없으면_정책과_무관하게_GREY다() {
+        assertThat(service.calculateMarkerColor(policy(AccessScope.NONE), null))
+            .isEqualTo(MarkerColor.GREY);
+    }
+
+    @Test
     void 정책이_없으면_GREY다() {
         assertThat(service.calculateMarkerColor(null, pet(PetBreed.MALTESE, 5.0, true, true, true)))
             .isEqualTo(MarkerColor.GREY);
