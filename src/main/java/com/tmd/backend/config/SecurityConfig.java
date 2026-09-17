@@ -35,7 +35,9 @@ public class SecurityConfig {
         http
             .authorizeHttpRequests(auth ->
                 auth
-                    .anyRequest().permitAll())
+                    .requestMatchers("/auth/login", "/auth/signup", "/auth/verify-email",
+                        "/auth/send-verification-code", "/places/**", "/reviews/{placeId}").permitAll()
+                    .anyRequest().authenticated())
             .csrf(AbstractHttpConfigurer::disable)
             .httpBasic(AbstractHttpConfigurer::disable)
             .formLogin(AbstractHttpConfigurer::disable)
