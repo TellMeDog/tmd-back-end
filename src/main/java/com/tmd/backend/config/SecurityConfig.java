@@ -55,7 +55,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfiguration(){
         CorsConfiguration corsConfiguration = new CorsConfiguration();
-        corsConfiguration.setAllowedOrigins(List.of("https://tellmedog.vercel.app", "http://localhost:5173")); // 프론트엔드 개발 포트에 맞춰야함.
+        corsConfiguration.setAllowedOrigins(List.of("https://tellmedog.vercel.app", "http://localhost:5173", "https://localhost")); // 프론트엔드 개발 포트에 맞춰야함.
         corsConfiguration.setAllowedHeaders(List.of("*"));
         corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         corsConfiguration.setAllowCredentials(true); // 쿠키 수신을 위한 설정
