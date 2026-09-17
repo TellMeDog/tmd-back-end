@@ -31,12 +31,15 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class PlaceService {
     private static final double EARTH_RADIUS_M = 6_371_000;
+    private static final double HOME_RADIUS_M = 6_000;
+    private static final int HOME_PLACE_LIMIT = 10;
 
     private final PlaceRepository placeRepository;
     private final PetRepository petRepository;
     private final MarkerColorService markerColorService;
     private final ReviewService reviewService;
     private final FavoriteService favoriteService;
+
     // Key Enum으로 할지 고려
     private static final Map<String, List<CategoryCode>> CATEGORY_MAP = Map.of(
         "카페", List.of(new CategoryCode("FD", "FD05", null)),
@@ -53,8 +56,8 @@ public class PlaceService {
 
     private record CategoryCode(String lclsSystm1, String lclsSystm2, String lclsSystm3){}
 
-    // 숙소, 공원, 계곡등과 같이 우리가 정해놓은 버튼을 클릭했을때 동작
-    // 현재 화면 내에서 검색 -> 받는 좌표는 현재 화면보다 더 넓은 좌표
+    // 프론트엔드가 현재 화면보다 넓게 계산한 bbox를 전달한다.
+    // 백엔드는 전달받은 bbox를 그대로 조회하며 화면 이동에 따른 재검색 여부는 프론트엔드가 판단한다.
     public List<PlaceMarkerResponse> searchByCategory(
         String category,
         String email,
@@ -67,29 +70,44 @@ public class PlaceService {
         double currMapY
     ) {
         String trimmedCategory = category == null ? "" : category.trim();
-        List<CategoryCode> codes = CATEGORY_MAP.get(trimmedCategory);
-
-        if (codes == null) {
+        boolean allCategories = "전체".equals(trimmedCategory);
+        List<CategoryCode> categoryCodes = allCategories ? List.of() : CATEGORY_MAP.get(trimmedCategory);
+        if (!allCategories && categoryCodes == null) {
             throw new BaseException(ErrorCode.INVALID_CATEGORY);
         }
 
         validateMapBounds(swLat, swLng, neLat, neLng);
         validateCoordinates(currMapY, currMapX);
-        Pet pet = petRepository.findByIdAndUserEmail(petId, email)
-            .orElseThrow(() -> new BaseException(ErrorCode.NOT_OWNER_OF_DOG));
+        Pet pet = findPetIfProvided(petId, email);
 
-        List<Place> places = codes.stream()
-            .flatMap(code ->
-                placeRepository.findPlacesWithCategory(
-                    swLat,
-                    swLng,
-                    neLat,
-                    neLng,
-                    code.lclsSystm1(),
-                    code.lclsSystm2(),
-                    code.lclsSystm3()
-                ).stream()
-            )
+        List<Place> places = allCategories
+            ? placeRepository.findPlacesWithinBounds(swLat, swLng, neLat, neLng)
+            : findPlacesByCategoryCodes(categoryCodes, swLat, swLng, neLat, neLng);
+
+        return toMarkerResponses(places, email, pet, currMapX, currMapY).stream()
+            .sorted(Comparator
+                .comparingLong(PlaceMarkerResponse::getDistance)
+                .thenComparing(PlaceMarkerResponse::getPlaceId))
+            .toList();
+    }
+
+    private List<Place> findPlacesByCategoryCodes(
+        List<CategoryCode> codes,
+        double swLat,
+        double swLng,
+        double neLat,
+        double neLng
+    ) {
+        return codes.stream()
+            .flatMap(code -> placeRepository.findPlacesWithCategory(
+                swLat,
+                swLng,
+                neLat,
+                neLng,
+                code.lclsSystm1(),
+                code.lclsSystm2(),
+                code.lclsSystm3()
+            ).stream())
             .collect(Collectors.toMap(
                 Place::getId,
                 Function.identity(),
@@ -98,12 +116,6 @@ public class PlaceService {
             ))
             .values()
             .stream()
-            .toList();
-
-        return toMarkerResponses(places, email, pet, currMapX, currMapY).stream()
-            .sorted(Comparator
-                .comparingLong(PlaceMarkerResponse::getDistance)
-                .thenComparing(PlaceMarkerResponse::getPlaceId))
             .toList();
     }
 
@@ -135,6 +147,37 @@ public class PlaceService {
         String lDongSignguCd = regionDetail.getCode();
 
         List<Place> places = placeRepository.findPlacesByRegion(lDongRegnCd, lDongSignguCd);
+        return toMarkerResponses(places, email, pet, currMapX, currMapY);
+    }
+
+    public List<PlaceMarkerResponse> init(String email, Long petId, double currMapX, double currMapY) {
+        validateCoordinates(currMapY, currMapX);
+        Pet pet = findPetIfProvided(petId, email);
+
+        MapBounds bounds = calculateBounds(currMapY, currMapX, HOME_RADIUS_M);
+        List<Place> places = placeRepository.findPlacesWithinBounds(
+                bounds.swLat(),
+                bounds.swLng(),
+                bounds.neLat(),
+                bounds.neLng()
+            ).stream()
+            .filter(place -> calculateDistance(
+                currMapY,
+                currMapX,
+                place.getMapY(),
+                place.getMapX()
+            ) <= HOME_RADIUS_M)
+            .sorted(Comparator
+                .comparingLong((Place place) -> calculateDistance(
+                    currMapY,
+                    currMapX,
+                    place.getMapY(),
+                    place.getMapX()
+                ))
+                .thenComparing(Place::getId))
+            .limit(HOME_PLACE_LIMIT)
+            .toList();
+
         return toMarkerResponses(places, email, pet, currMapX, currMapY);
     }
 
@@ -274,6 +317,25 @@ public class PlaceService {
         }
     }
 
+    private MapBounds calculateBounds(double lat, double lng, double radiusM) {
+        double angularDistance = radiusM / EARTH_RADIUS_M;
+        double latDelta = Math.toDegrees(angularDistance);
+        double cosine = Math.cos(Math.toRadians(lat));
+        double lngDelta = Math.abs(cosine) < 1e-12
+            ? 180
+            : Math.min(180, Math.toDegrees(angularDistance / cosine));
+
+        double swLat = Math.max(-90, lat - latDelta);
+        double neLat = Math.min(90, lat + latDelta);
+        double swLng = lng - lngDelta;
+        double neLng = lng + lngDelta;
+        if (swLng < -180 || neLng > 180) {
+            swLng = -180;
+            neLng = 180;
+        }
+        return new MapBounds(swLat, swLng, neLat, neLng);
+    }
+
     private long calculateDistance(double lat1, double lng1, double lat2, double lng2) {
         double latDistance = Math.toRadians(lat2 - lat1);
         double lngDistance = Math.toRadians(lng2 - lng1);
@@ -287,4 +349,6 @@ public class PlaceService {
 
         return Math.round(EARTH_RADIUS_M * c);
     }
+
+    private record MapBounds(double swLat, double swLng, double neLat, double neLng) {}
 }

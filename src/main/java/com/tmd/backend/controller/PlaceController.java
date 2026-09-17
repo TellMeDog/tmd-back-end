@@ -12,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,6 +25,25 @@ public class PlaceController {
     private final PlaceService placeService;
 
     @Operation(
+        summary = "메인 화면 미니 지도에 표시",
+        description = "메인 화면 지도에 표시될 장소들을 현재 좌표의 6km 이내의 10개 내려줍니다."
+    )
+    @GetMapping("/init")
+    public ResponseEntity<SuccessResponseDto<List<PlaceMarkerResponse>>> init(
+        @Parameter(description = "조회할 반려동물 ID (없으면 회색 마커)", example = "1")
+        @RequestParam(required = false) Long petId,
+        @Parameter(description = "사용자 현재 경도 좌표", example = "127.1234") @RequestParam double currMapX,
+        @Parameter(description = "사용자 현재 위도 좌표", example = "37.1234") @RequestParam double currMapY,
+        Authentication authentication
+    ){
+        String email = authenticatedEmail(authentication);
+
+        List<PlaceMarkerResponse> response = placeService.init(email, petId, currMapX, currMapY);
+
+        return ResponseEntity.ok(SuccessResponseDto.success("미니 지도 장소들을 조회했습니다.", response));
+    }
+
+    @Operation(
         summary = "카테고리별 장소 검색",
         description = "사용자가 보고 있는 지도 영역 내에서 선택한 카테고리에 해당하는 장소를 조회합니다." )
     @GetMapping("/search/category")
@@ -36,9 +54,13 @@ public class PlaceController {
         @Parameter(description = "지도 영역의 북동쪽 경도", example = "128.1234") @RequestParam double neLng,
         @Parameter(description = "사용자 현재 경도 좌표", example = "127.1234") @RequestParam double currMapX,
         @Parameter(description = "사용자 현재 위도 좌표", example = "37.1234") @RequestParam double currMapY,
-        @Parameter(description = "검색할 카테고리", example = "카페") @RequestParam String category,
-        @Parameter(description = "조회할 반려동물 ID", example = "1") @RequestParam Long petId,
-        @AuthenticationPrincipal String email) {
+        @Parameter(description = "검색할 카테고리 (전체, 카페, 계곡, 숙소, 음식점, 주점)", example = "전체")
+        @RequestParam(defaultValue = "전체") String category,
+        @Parameter(description = "조회할 반려동물 ID (없으면 회색 마커)", example = "1")
+        @RequestParam(required = false) Long petId,
+        Authentication authentication) {
+
+        String email = authenticatedEmail(authentication);
 
         log.info("장소 목록 조회: bounds=({},{})~({},{}), petId={}, category={}", swLat, swLng, neLat, neLng, petId, category);
 

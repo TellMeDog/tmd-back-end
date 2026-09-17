@@ -6,6 +6,8 @@ import java.util.List;
 
 public interface PlaceRepositoryCustom {
 
+    List<Place> findPlacesWithinBounds(double swLat, double swLng, double neLat, double neLng);
+
     List<Place> findPlacesWithCategory(double swLat, double swLng, double neLat, double neLng,
                                        String lclsSystm1, String lclsSystm2, String lclsSystm3);
     List<Place> findPlacesWithKeyword(String keyword);

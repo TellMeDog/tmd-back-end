@@ -22,6 +22,19 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom{
     private static final QPlacePetPolicy placePetPolicy = QPlacePetPolicy.placePetPolicy;
 
     @Override
+    public List<Place> findPlacesWithinBounds(double swLat, double swLng, double neLat, double neLng) {
+        return jpaQueryFactory
+            .selectFrom(place)
+            .leftJoin(place.placePetPolicy, placePetPolicy).fetchJoin()
+            .where(
+                activePlace(),
+                place.mapX.between(swLng, neLng),
+                place.mapY.between(swLat, neLat)
+            )
+            .fetch();
+    }
+
+    @Override
     public List<Place> findPlacesWithCategory(double swLat, double swLng, double neLat, double neLng,
                                               String lclsSystm1, String lclsSystm2, String lclsSystm3) {
         return jpaQueryFactory

@@ -6,10 +6,7 @@ import com.tmd.backend.domain.pet.Pet;
 import com.tmd.backend.domain.place.Place;
 import com.tmd.backend.dto.response.place.PlaceMarkerResponse;
 import com.tmd.backend.exception.BaseException;
-import com.tmd.backend.external.TourApiClient;
 import com.tmd.backend.repository.PetRepository;
-import com.tmd.backend.repository.PlacePetInfoRepository;
-import com.tmd.backend.repository.PlacePetPolicyRepository;
 import com.tmd.backend.repository.PlaceRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,6 +23,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyDouble;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -35,11 +34,7 @@ class PlaceCategorySearchTest {
 
     @Mock PlaceRepository placeRepository;
     @Mock PetRepository petRepository;
-    @Mock TourApiClient tourApiClient;
-    @Mock PlacePetInfoRepository placePetInfoRepository;
-    @Mock PlacePetPolicyRepository placePetPolicyRepository;
     @Mock MarkerColorService markerColorService;
-    @Mock KeywordCacheService keywordCacheService;
     @Mock ReviewService reviewService;
     @Mock FavoriteService favoriteService;
 
@@ -72,7 +67,6 @@ class PlaceCategorySearchTest {
             .containsExactly(1L, 2L);
         assertThat(result).extracting(PlaceMarkerResponse::getAverageRating)
             .containsExactly(4.5, 0.0);
-        verifyNoInteractions(tourApiClient);
     }
 
     @Test
@@ -117,7 +111,7 @@ class PlaceCategorySearchTest {
             .satisfies(exception -> assertThat(((BaseException) exception).getErrorCode())
                 .isEqualTo(ErrorCode.VALIDATION_ERROR));
 
-        verifyNoInteractions(placeRepository, petRepository, tourApiClient);
+        verifyNoInteractions(placeRepository, petRepository);
     }
 
     @Test
@@ -138,6 +132,68 @@ class PlaceCategorySearchTest {
         verify(placeRepository, never()).findPlacesWithCategory(
             37.0, 127.0, 38.0, 128.0, "FD", "FD05", null
         );
+    }
+
+    @Test
+    @DisplayName("비회원은 petId 없이 카테고리를 검색하고 회색 마커를 받음")
+    void guestSearchReturnsGreyMarkers() {
+        Place place = place(1L, "카페", 127.01, 37.01);
+        given(placeRepository.findPlacesWithCategory(
+            37.0, 127.0, 38.0, 128.0, "FD", "FD05", null
+        )).willReturn(List.of(place));
+        given(reviewService.getAverageRatings(List.of(1L))).willReturn(Map.of(1L, 4.0));
+        given(markerColorService.calculateMarkerColor(null, null)).willReturn(MarkerColor.GREY);
+
+        List<PlaceMarkerResponse> result = placeService.searchByCategory(
+            "카페", null, null,
+            37.0, 127.0, 38.0, 128.0,
+            127.0, 37.0
+        );
+
+        assertThat(result).singleElement().satisfies(marker -> {
+            assertThat(marker.getMarkerColor()).isEqualTo("GREY");
+            assertThat(marker.isFavorite()).isFalse();
+        });
+        verifyNoInteractions(petRepository, favoriteService);
+    }
+
+    @Test
+    @DisplayName("전체 카테고리는 bbox 안의 모든 장소를 거리순으로 반환")
+    void allCategoryReturnsEveryPlaceWithinBounds() {
+        Place farPlace = place(2L, "먼 장소", 127.10, 37.10);
+        Place nearPlace = place(1L, "가까운 장소", 127.01, 37.01);
+        given(placeRepository.findPlacesWithinBounds(37.0, 127.0, 38.0, 128.0))
+            .willReturn(List.of(farPlace, nearPlace));
+        given(reviewService.getAverageRatings(List.of(2L, 1L))).willReturn(Map.of());
+        given(markerColorService.calculateMarkerColor(null, null)).willReturn(MarkerColor.GREY);
+
+        List<PlaceMarkerResponse> result = placeService.searchByCategory(
+            " 전체 ", null, null,
+            37.0, 127.0, 38.0, 128.0,
+            127.0, 37.0
+        );
+
+        assertThat(result).extracting(PlaceMarkerResponse::getPlaceId)
+            .containsExactly(1L, 2L);
+        verify(placeRepository, never()).findPlacesWithCategory(
+            anyDouble(), anyDouble(), anyDouble(), anyDouble(),
+            any(), any(), any()
+        );
+    }
+
+    @Test
+    @DisplayName("지원하지 않는 카테고리는 DB 조회 전에 거부")
+    void rejectsUnknownCategory() {
+        assertThatThrownBy(() -> placeService.searchByCategory(
+            "없는 카테고리", null, null,
+            37.0, 127.0, 38.0, 128.0,
+            127.0, 37.0
+        ))
+            .isInstanceOf(BaseException.class)
+            .satisfies(exception -> assertThat(((BaseException) exception).getErrorCode())
+                .isEqualTo(ErrorCode.INVALID_CATEGORY));
+
+        verifyNoInteractions(placeRepository, petRepository);
     }
 
     private Place place(Long id, String title, double mapX, double mapY) {
