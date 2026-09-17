@@ -5,6 +5,8 @@ import com.tmd.backend.dto.response.review.ReviewDetailResponse;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.List;
 
 @Getter
@@ -37,7 +39,10 @@ public class PlaceDetailResponse {
 
     @Getter
     @Builder
-    public static class VisitStats {
+    public static class VisitStats implements Serializable {
+        @Serial
+        private static final long serialVersionUID = 1L;
+
         private long enteredCount; // ex. 안내대로 입장했어요 22명 (feedbackType == "ENTERED")
         private long mismatchedCount; // ex. 안내된 조건과 달랐어요. 12명 (feedbackType == "MISMATCHED_INFO")
         private long deniedCount; // ex. 입장이 불가능했어요. 1명 (feedbackType == "DENIED")

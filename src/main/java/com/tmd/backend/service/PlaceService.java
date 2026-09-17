@@ -186,8 +186,8 @@ public class PlaceService {
         Long placeId,
         Long petId,
         String email,
-        double currMapX,
-        double currMapY,
+        double mapX,
+        double mapY,
         int reviewSize,
         String reviewSort
     ) {
@@ -222,8 +222,8 @@ public class PlaceService {
                 email,
                 place,
                 pet,
-                currMapX,
-                currMapY,
+                mapX,
+                mapY,
                 reviewService.getAverageRating(placeId)
             ))
             .zipCode(place.getZipCode())
