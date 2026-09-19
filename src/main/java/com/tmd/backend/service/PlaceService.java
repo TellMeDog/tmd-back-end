@@ -7,6 +7,8 @@ import com.tmd.backend.common.RegionDetail;
 import com.tmd.backend.domain.pet.Pet;
 import com.tmd.backend.domain.place.Place;
 import com.tmd.backend.domain.place.PlacePetInfo;
+import com.tmd.backend.domain.place.TourCategory;
+import com.tmd.backend.dto.response.place.PlaceCategoryResponse;
 import com.tmd.backend.dto.response.place.PlaceDetailResponse;
 import com.tmd.backend.dto.response.place.PlaceMarkerResponse;
 import com.tmd.backend.exception.BaseException;
@@ -19,11 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -39,27 +38,12 @@ public class PlaceService {
     private final MarkerColorService markerColorService;
     private final ReviewService reviewService;
     private final FavoriteService favoriteService;
-
-    // Key Enum으로 할지 고려
-    private static final Map<String, List<CategoryCode>> CATEGORY_MAP = Map.of(
-        "카페", List.of(new CategoryCode("FD", "FD05", null)),
-        "계곡", List.of(new CategoryCode("NA", "NA01", "NA010400")),
-        "숙소", List.of(new CategoryCode("AC", null, null)),
-        "음식점", List.of(
-            new CategoryCode("FD", "FD01", null),
-            new CategoryCode("FD", "FD02", null),
-            new CategoryCode("FD", "FD03", null)
-        ),
-        "주점", List.of(new CategoryCode("FD", "FD04", null)
-        )
-    );
-
-    private record CategoryCode(String lclsSystm1, String lclsSystm2, String lclsSystm3){}
+    private final PlaceCategoryService placeCategoryService;
 
     // 프론트엔드가 현재 화면보다 넓게 계산한 bbox를 전달한다.
     // 백엔드는 전달받은 bbox를 그대로 조회하며 화면 이동에 따른 재검색 여부는 프론트엔드가 판단한다.
     public List<PlaceMarkerResponse> searchByCategory(
-        String category,
+        String categoryCode,
         String email,
         Long petId,
         double swLat,
@@ -69,20 +53,21 @@ public class PlaceService {
         double currMapX,
         double currMapY
     ) {
-        String trimmedCategory = category == null ? "" : category.trim();
-        boolean allCategories = "전체".equals(trimmedCategory);
-        List<CategoryCode> categoryCodes = allCategories ? List.of() : CATEGORY_MAP.get(trimmedCategory);
-        if (!allCategories && categoryCodes == null) {
-            throw new BaseException(ErrorCode.INVALID_CATEGORY);
-        }
-
         validateMapBounds(swLat, swLng, neLat, neLng);
         validateCoordinates(currMapY, currMapX);
         Pet pet = findPetIfProvided(petId, email);
+        TourCategory category = findCategoryIfProvided(categoryCode);
 
-        List<Place> places = allCategories
+        List<Place> places = category == null
             ? placeRepository.findPlacesWithinBounds(swLat, swLng, neLat, neLng)
-            : findPlacesByCategoryCodes(categoryCodes, swLat, swLng, neLat, neLng);
+            : placeRepository.findPlacesWithCategory(
+                swLat,
+                swLng,
+                neLat,
+                neLng,
+                category.getDepth(),
+                category.getCode()
+            );
 
         return toMarkerResponses(places, email, pet, currMapX, currMapY).stream()
             .sorted(Comparator
@@ -91,49 +76,29 @@ public class PlaceService {
             .toList();
     }
 
-    private List<Place> findPlacesByCategoryCodes(
-        List<CategoryCode> codes,
-        double swLat,
-        double swLng,
-        double neLat,
-        double neLng
-    ) {
-        return codes.stream()
-            .flatMap(code -> placeRepository.findPlacesWithCategory(
-                swLat,
-                swLng,
-                neLat,
-                neLng,
-                code.lclsSystm1(),
-                code.lclsSystm2(),
-                code.lclsSystm3()
-            ).stream())
-            .collect(Collectors.toMap(
-                Place::getId,
-                Function.identity(),
-                (first, duplicate) -> first,
-                LinkedHashMap::new
-            ))
-            .values()
-            .stream()
-            .toList();
+    public List<PlaceCategoryResponse> getCategories() {
+        return placeCategoryService.getCategories();
     }
 
     // 검색창에 검색 로직
-    public List<PlaceMarkerResponse> searchByKeyword(String keyword, Long petId, String email, double currMapX, double currMapY) {
+    public List<PlaceMarkerResponse> searchByKeyword(
+        String keyword,
+        Long petId,
+        String email,
+        double currMapX,
+        double currMapY
+    ) {
         String trimmedKeyword = keyword == null ? "" : keyword.trim();
-
-        if(trimmedKeyword.isBlank()) {
-            throw new BaseException(ErrorCode.PLACE_NOT_FOUND); //TODO: 적절한 ErrorCode 추가할 것.
+        if (trimmedKeyword.isBlank()) {
+            throw new BaseException(ErrorCode.PLACE_NOT_FOUND);
         }
-
         Pet pet = findPetIfProvided(petId, email);
 
         List<Place> places = placeRepository.findPlacesWithKeyword(trimmedKeyword);
         return toMarkerResponses(places, email, pet, currMapX, currMapY).stream()
             .sorted(Comparator
-                .comparingLong(PlaceMarkerResponse::getDistance) // 거리순 정렬
-                .thenComparing(PlaceMarkerResponse::getPlaceId)) // 거리가 같다면 id로 정렬
+                .comparingLong(PlaceMarkerResponse::getDistance)
+                .thenComparing(PlaceMarkerResponse::getPlaceId))
             .toList();
     }
 
@@ -285,6 +250,12 @@ public class PlaceService {
             .markerColor(color.name())
             .averageRating(averageRating)
             .build();
+    }
+
+    private TourCategory findCategoryIfProvided(String categoryCode) {
+        return StringUtils.hasText(categoryCode)
+            ? placeCategoryService.getActiveCategory(categoryCode)
+            : null;
     }
 
     private Pet findPetIfProvided(Long petId, String email) {

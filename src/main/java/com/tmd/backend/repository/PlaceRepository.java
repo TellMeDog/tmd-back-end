@@ -20,4 +20,8 @@ public interface PlaceRepository extends JpaRepository<Place, Long>, PlaceReposi
     @Query("SELECT p.id FROM Place p WHERE (p.active = true OR p.active IS NULL) " +
         "AND (p.petInfoSyncedModifiedTime IS NULL OR p.petInfoSyncedModifiedTime <> p.modifiedTime) ORDER BY p.id")
     List<Long> findPendingPetInfoSyncIds();
+
+    @Query("SELECT DISTINCT p.lclsSystm1, p.lclsSystm2, p.lclsSystm3 FROM Place p " +
+        "WHERE (p.active = true OR p.active IS NULL)")
+    List<Object[]> findDistinctActiveCategoryPaths();
 }

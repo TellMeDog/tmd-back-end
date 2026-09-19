@@ -36,7 +36,7 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom{
 
     @Override
     public List<Place> findPlacesWithCategory(double swLat, double swLng, double neLat, double neLng,
-                                              String lclsSystm1, String lclsSystm2, String lclsSystm3) {
+                                              int categoryDepth, String categoryCode) {
         return jpaQueryFactory
             .selectFrom(place)
             .leftJoin(place.placePetPolicy, placePetPolicy).fetchJoin()
@@ -44,9 +44,7 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom{
                 activePlace(),
                 place.mapX.between(swLng, neLng),
                 place.mapY.between(swLat, neLat),
-                lclsSystm1Eq(lclsSystm1),
-                lclsSystm2Eq(lclsSystm2),
-                lclsSystm3Eq(lclsSystm3))
+                categoryEq(categoryDepth, categoryCode))
             .fetch();
     }
 
@@ -99,20 +97,12 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom{
             : place.lDongSignguCd.eq(lDongSignguCd);
     }
 
-    private BooleanExpression lclsSystm1Eq(String lclsSystm1){
-        return lclsSystm1 == null
-            ? null
-            : place.lclsSystm1.eq(lclsSystm1);
-    }
-
-    private BooleanExpression lclsSystm2Eq(String lclsSystm2){
-        return lclsSystm2 == null
-            ? null
-            : place.lclsSystm2.eq(lclsSystm2);
-    }
-    private BooleanExpression lclsSystm3Eq(String lclsSystm3){
-        return lclsSystm3 == null
-            ? null
-            : place.lclsSystm3.eq(lclsSystm3);
+    private BooleanExpression categoryEq(int depth, String code) {
+        return switch (depth) {
+            case 1 -> place.lclsSystm1.eq(code);
+            case 2 -> place.lclsSystm2.eq(code);
+            case 3 -> place.lclsSystm3.eq(code);
+            default -> throw new IllegalArgumentException("Category depth must be between 1 and 3");
+        };
     }
 }

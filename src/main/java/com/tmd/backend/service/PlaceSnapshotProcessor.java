@@ -4,6 +4,7 @@ import com.tmd.backend.domain.place.Place;
 import com.tmd.backend.external.TourApiPlaceItem;
 import com.tmd.backend.repository.PlaceRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +16,7 @@ public class PlaceSnapshotProcessor {
     private final PlaceRepository placeRepository;
 
     @Transactional
+    @CacheEvict(value = "placeCategories", allEntries = true)
     public SnapshotResult apply(List<TourApiPlaceItem> items) {
         Map<String, Place> existing = new HashMap<>();
         placeRepository.findAllForSync().forEach(place -> existing.put(place.getContentId(), place));

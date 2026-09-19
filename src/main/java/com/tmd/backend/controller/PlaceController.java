@@ -1,6 +1,7 @@
 package com.tmd.backend.controller;
 
 import com.tmd.backend.dto.response.SuccessResponseDto;
+import com.tmd.backend.dto.response.place.PlaceCategoryResponse;
 import com.tmd.backend.dto.response.place.PlaceDetailResponse;
 import com.tmd.backend.dto.response.place.PlaceMarkerResponse;
 import com.tmd.backend.service.PlaceService;
@@ -45,27 +46,28 @@ public class PlaceController {
 
     @Operation(
         summary = "카테고리별 장소 검색",
-        description = "사용자가 보고 있는 지도 영역 내에서 선택한 카테고리에 해당하는 장소를 조회합니다." )
+        description = "사용자가 보고 있는 지도 영역 내에서 선택한 Tour API 카테고리 코드에 해당하는 장소를 조회합니다." )
     @GetMapping("/search/category")
     public ResponseEntity<SuccessResponseDto<List<PlaceMarkerResponse>>> getPlacesWithCategory(
         @Parameter(description = "지도 영역의 남서쪽 위도", example = "37.1234") @RequestParam double swLat,
         @Parameter(description = "지도 영역의 남서쪽 경도", example = "127.1234") @RequestParam double swLng,
         @Parameter(description = "지도 영역의 북동쪽 위도", example = "38.1234") @RequestParam double neLat,
         @Parameter(description = "지도 영역의 북동쪽 경도", example = "128.1234") @RequestParam double neLng,
+        @Parameter(description = "검색할 Tour API 카테고리 코드. 생략하면 전체 장소를 조회합니다.", example = "FD05")
+        @RequestParam(required = false) String categoryCode,
         @Parameter(description = "사용자 현재 경도 좌표", example = "127.1234") @RequestParam double currMapX,
         @Parameter(description = "사용자 현재 위도 좌표", example = "37.1234") @RequestParam double currMapY,
-        @Parameter(description = "검색할 카테고리 (전체, 카페, 계곡, 숙소, 음식점, 주점)", example = "전체")
-        @RequestParam(defaultValue = "전체") String category,
         @Parameter(description = "조회할 반려동물 ID (없으면 회색 마커)", example = "1")
         @RequestParam(required = false) Long petId,
         Authentication authentication) {
 
         String email = authenticatedEmail(authentication);
 
-        log.info("장소 목록 조회: bounds=({},{})~({},{}), petId={}, category={}", swLat, swLng, neLat, neLng, petId, category);
+        log.info("장소 목록 조회: bounds=({},{})~({},{}), petId={}, categoryCode={}",
+            swLat, swLng, neLat, neLng, petId, categoryCode);
 
         List<PlaceMarkerResponse> response = placeService.searchByCategory(
-            category,
+            categoryCode,
             email,
             petId,
             swLat,
@@ -77,6 +79,16 @@ public class PlaceController {
         );
 
         return ResponseEntity.ok(SuccessResponseDto.success("장소 목록을 조회했습니다.", response));
+    }
+
+    @Operation(
+        summary = "장소 카테고리 목록 조회",
+        description = "활성 장소가 사용하는 Tour API 대·중·소분류를 계층형으로 조회합니다."
+    )
+    @GetMapping("/categories")
+    public ResponseEntity<SuccessResponseDto<List<PlaceCategoryResponse>>> getCategories() {
+        List<PlaceCategoryResponse> response = placeService.getCategories();
+        return ResponseEntity.ok(SuccessResponseDto.success("장소 카테고리 목록을 조회했습니다.", response));
     }
 
     @Operation(
@@ -94,9 +106,11 @@ public class PlaceController {
 
         String email = authenticatedEmail(authentication);
 
-        log.info("키워드 장소 검색: keyword={}, petID={}, email={}, 현재좌표: {}, {}", keyword, petId, email, currMapX, currMapY);
+        log.info("키워드 장소 검색: keyword={}, petId={}, email={}", keyword, petId, email);
 
-        List<PlaceMarkerResponse> response = placeService.searchByKeyword(keyword, petId, email, currMapX, currMapY);
+        List<PlaceMarkerResponse> response = placeService.searchByKeyword(
+            keyword, petId, email, currMapX, currMapY
+        );
 
         return ResponseEntity.ok(SuccessResponseDto.success("키워드 장소 목록을 조회했습니다.", response));
     }

@@ -39,7 +39,31 @@ class PlaceRepositoryBoundsTest {
         assertThat(result).extracting(Place::getContentId).containsExactly(inside.getContentId());
     }
 
+    @Test
+    void 선택한_분류_단계의_코드로_bbox_장소를_조회한다() {
+        em.persist(place("cafe", 127.5, 37.5, "FD", "FD05", "FD050100"));
+        em.persist(place("restaurant", 127.6, 37.6, "FD", "FD01", "FD010100"));
+        em.persist(place("hotel", 127.7, 37.7, "AC", "AC01", "AC010100"));
+        em.flush();
+        em.clear();
+
+        assertThat(placeRepository.findPlacesWithCategory(
+            37.0, 127.0, 38.0, 128.0, 1, "FD"
+        )).extracting(Place::getContentId).containsExactlyInAnyOrder("cafe", "restaurant");
+        assertThat(placeRepository.findPlacesWithCategory(
+            37.0, 127.0, 38.0, 128.0, 2, "FD05"
+        )).extracting(Place::getContentId).containsExactly("cafe");
+        assertThat(placeRepository.findPlacesWithCategory(
+            37.0, 127.0, 38.0, 128.0, 3, "FD050100"
+        )).extracting(Place::getContentId).containsExactly("cafe");
+    }
+
     private Place place(String contentId, double mapX, double mapY) {
+        return place(contentId, mapX, mapY, null, null, null);
+    }
+
+    private Place place(String contentId, double mapX, double mapY,
+                        String level1, String level2, String level3) {
         return Place.create(
             contentId,
             null,
@@ -53,9 +77,9 @@ class PlaceRepositoryBoundsTest {
             null,
             null,
             null,
-            null,
-            null,
-            null
+            level1,
+            level2,
+            level3
         );
     }
 }

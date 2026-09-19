@@ -13,6 +13,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
+@Table(indexes = {
+    @Index(name = "idx_place_active_lcls1", columnList = "active, lcls_systm1"),
+    @Index(name = "idx_place_active_lcls2", columnList = "active, lcls_systm2"),
+    @Index(name = "idx_place_active_lcls3", columnList = "active, lcls_systm3")
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Place {
