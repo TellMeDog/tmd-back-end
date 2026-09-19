@@ -1,7 +1,7 @@
 package com.tmd.backend.domain.place;
 
 import com.tmd.backend.common.PetInfoStatus;
-import com.tmd.backend.external.TourApiPetInfoItem;
+import com.tmd.backend.external.tourapi.TourApiPetInfoItem;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;

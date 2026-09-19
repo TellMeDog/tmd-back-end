@@ -4,7 +4,7 @@ import com.tmd.backend.dto.request.pet.PetRegisterRequest;
 import com.tmd.backend.dto.request.pet.PetUpdateRequest;
 import com.tmd.backend.dto.response.SuccessResponseDto;
 import com.tmd.backend.dto.response.pet.PetResponse;
-import com.tmd.backend.service.PetService;
+import com.tmd.backend.service.pet.PetService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;

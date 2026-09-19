@@ -1,7 +1,7 @@
 package com.tmd.backend.controller;
 
 import com.tmd.backend.dto.response.SuccessResponseDto;
-import com.tmd.backend.service.SeedService;
+import com.tmd.backend.service.place.sync.SeedService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

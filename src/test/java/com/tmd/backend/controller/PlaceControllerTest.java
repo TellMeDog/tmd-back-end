@@ -1,6 +1,6 @@
 package com.tmd.backend.controller;
 
-import com.tmd.backend.service.PlaceService;
+import com.tmd.backend.service.place.PlaceService;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;

@@ -4,7 +4,7 @@ package com.tmd.backend.controller;
 
 import com.tmd.backend.dto.response.SuccessResponseDto;
 import com.tmd.backend.dto.response.user.UserResponse;
-import com.tmd.backend.service.UserService;
+import com.tmd.backend.service.user.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

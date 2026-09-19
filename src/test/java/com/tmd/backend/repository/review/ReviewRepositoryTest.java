@@ -1,0 +1,293 @@
+package com.tmd.backend.repository.review;
+
+import com.tmd.backend.ai.AccessScope;
+import com.tmd.backend.domain.pet.Pet;
+import com.tmd.backend.domain.pet.PetBreed;
+import com.tmd.backend.domain.place.Place;
+import com.tmd.backend.domain.place.PlacePetPolicy;
+import com.tmd.backend.domain.review.FeedbackType;
+import com.tmd.backend.domain.review.Review;
+import com.tmd.backend.domain.user.User;
+import com.tmd.backend.config.QuerydslConfig;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.hibernate.Hibernate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
+import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
+import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@DataJpaTest
+@Import(QuerydslConfig.class)
+class ReviewRepositoryTest {
+
+    @Autowired TestEntityManager em;
+    @Autowired ReviewRepository reviewRepository;
+
+    private User user;
+    private Place place;
+
+    @BeforeEach
+    void setUp() {
+        user = em.persist(User.createLocal("test@email.com", "encoded-password", "테스트"));
+        place = em.persist(Place.create(
+            "CONTENT001", null, "서울시 강남구", null, "테스트 장소",
+            127.05, 37.50, null, null, null,
+            null, null, "FD", "FD05", null
+        ));
+        em.flush();
+    }
+
+    // ===== findByIdAndUserEmail =====
+
+    @Test
+    @DisplayName("본인 리뷰 조회 성공")
+    void findByIdAndUserEmail_성공() {
+        Review review = em.persist(review(FeedbackType.ENTERED, 5));
+        em.flush();
+
+        Optional<Review> result = reviewRepository.findByIdAndUserEmail(review.getId(), "test@email.com");
+
+        assertThat(result).isPresent();
+        assertThat(result.get().getRating()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("다른 사용자 이메일로 조회 시 empty")
+    void findByIdAndUserEmail_타인이메일_empty() {
+        Review review = em.persist(review(FeedbackType.ENTERED, 5));
+        em.flush();
+
+        Optional<Review> result = reviewRepository.findByIdAndUserEmail(review.getId(), "other@email.com");
+
+        assertThat(result).isEmpty();
+    }
+
+    // ===== findAverageRatingByPlaceId =====
+
+    @Test
+    @DisplayName("리뷰 없으면 empty 반환")
+    void findAverageRatingByPlaceId_리뷰없으면_empty() {
+        Optional<Double> result = reviewRepository.findAverageRatingByPlaceId(place.getId());
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    @DisplayName("평균 평점 정상 집계")
+    void findAverageRatingByPlaceId_정상집계() {
+        em.persist(review(FeedbackType.ENTERED, 4));
+        em.persist(review(FeedbackType.ENTERED, 2));
+        em.flush();
+
+        Optional<Double> result = reviewRepository.findAverageRatingByPlaceId(place.getId());
+
+        assertThat(result).isPresent();
+        assertThat(result.get()).isEqualTo(3.0);
+    }
+
+    @Test
+    void findAverageRatingsByPlaceIds_장소별평균집계() {
+        Place otherPlace = em.persist(Place.create(
+            "CONTENT002", null, "서울시", null, "다른 장소",
+            127.01, 37.49, null, null, null,
+            null, null, "FD", "FD05", null
+        ));
+        em.persist(review(FeedbackType.ENTERED, 4));
+        em.persist(review(FeedbackType.ENTERED, 2));
+        em.persist(review(user, otherPlace, FeedbackType.ENTERED, 5));
+        em.flush();
+
+        List<Object[]> result = reviewRepository.findAverageRatingsByPlaceIds(
+            List.of(place.getId(), otherPlace.getId())
+        );
+        Map<Long, Double> ratings = result.stream()
+            .collect(Collectors.toMap(row -> (Long) row[0], row -> (Double) row[1]));
+
+        assertThat(ratings).containsEntry(place.getId(), 3.0);
+        assertThat(ratings).containsEntry(otherPlace.getId(), 5.0);
+    }
+
+    // ===== countGroupByFeedbackType =====
+
+    @Test
+    @DisplayName("feedbackType별 카운트 집계")
+    void countGroupByFeedbackType_정상집계() {
+        em.persist(review(FeedbackType.ENTERED, 5));
+        em.persist(review(FeedbackType.ENTERED, 4));
+        em.persist(review(FeedbackType.DENIED, 1));
+        em.flush();
+
+        ReviewVisitStatsProjection summary = reviewRepository.findVisitStatsSummary(place.getId());
+
+        assertThat(summary.getEnteredCount()).isEqualTo(2L);
+        assertThat(summary.getMismatchedCount()).isZero();
+        assertThat(summary.getDeniedCount()).isEqualTo(1L);
+        assertThat(summary.getLastReportedAt()).isNotNull();
+    }
+
+    // ===== findLastReportedAtByPlaceId =====
+
+    @Test
+    @DisplayName("가장 최근 리뷰 작성 시각 조회")
+    void findLastReportedAtByPlaceId_최근시각조회() {
+        Review review = em.persist(review(FeedbackType.ENTERED, 3));
+        em.flush();
+
+        ReviewVisitStatsProjection result = reviewRepository.findVisitStatsSummary(place.getId());
+
+        assertThat(result.getLastReportedAt()).isEqualToIgnoringNanos(review.getCreatedAt());
+    }
+
+    @Test
+    @DisplayName("리뷰가 없으면 최근 작성 시각은 empty")
+    void findLastReportedAtByPlaceId_리뷰없으면_empty() {
+        ReviewVisitStatsProjection result = reviewRepository.findVisitStatsSummary(place.getId());
+
+        assertThat(result.getEnteredCount()).isNull();
+        assertThat(result.getMismatchedCount()).isNull();
+        assertThat(result.getDeniedCount()).isNull();
+        assertThat(result.getLastReportedAt()).isNull();
+    }
+
+    @Test
+    @DisplayName("방문 견종을 리뷰 수가 많은 순서로 제한 조회")
+    void findTopBreedsByPlaceId_상위견종조회() {
+        Pet mock1 = em.persist(Pet.create(
+            user, "첫째", PetBreed.SHIBA_INU, 8.5, null, false, true, false));
+        Pet mock2 = em.persist(Pet.create(
+            user, "둘째", PetBreed.BEAGLE, 12.0, null, false, true, true));
+        em.persist(Review.create(user, place, mock1, FeedbackType.ENTERED, null, null, 5, null, null));
+        em.persist(Review.create(user, place, mock1, FeedbackType.ENTERED, null, null, 4, null, null));
+        em.persist(Review.create(user, place, mock2, FeedbackType.ENTERED, null, null, 3, null, null));
+        em.flush();
+
+        List<Object[]> result = reviewRepository.findTopBreedsByPlaceId(
+            place.getId(),
+            PageRequest.of(0, 1)
+        );
+
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst()[0]).isEqualTo(PetBreed.SHIBA_INU);
+        assertThat(result.getFirst()[1]).isEqualTo(2L);
+    }
+
+    // ===== findByUserEmail (pagination) =====
+
+    @Test
+    @DisplayName("내 리뷰 목록 페이지네이션")
+    void findByUserEmail_페이지네이션() {
+        for (int i = 0; i < 3; i++) {
+            em.persist(review(FeedbackType.ENTERED, 4));
+        }
+        em.flush();
+
+        Page<Review> page = reviewRepository.findByUserEmail(
+            "test@email.com", PageRequest.of(0, 2, Sort.by(Sort.Direction.DESC, "createdAt")));
+
+        assertThat(page.getTotalElements()).isEqualTo(3);
+        assertThat(page.getContent()).hasSize(2);
+        assertThat(page.getTotalPages()).isEqualTo(2);
+    }
+
+    @Test
+    void findByUserEmail_장소와정책을함께조회() {
+        em.persist(PlacePetPolicy.builder()
+            .place(place)
+            .accessScope(AccessScope.ALL)
+            .build());
+        em.persist(review(FeedbackType.ENTERED, 4));
+        em.flush();
+        em.clear();
+
+        Review result = reviewRepository.findByUserEmail(
+            "test@email.com", PageRequest.of(0, 10)
+        ).getContent().getFirst();
+
+        assertThat(Hibernate.isInitialized(result.getPlace())).isTrue();
+        assertThat(Hibernate.isInitialized(result.getPlace().getPlacePetPolicy())).isTrue();
+    }
+
+    @Test
+    @DisplayName("장소 상세의 내 리뷰는 다른 장소 리뷰를 제외한다")
+    void findByPlaceIdAndUserEmail_장소필터링() {
+        Place otherPlace = em.persist(Place.create(
+            "CONTENT002", null, "서울시 서초구", null, "다른 장소",
+            127.01, 37.49, null, null, null,
+            null, null, "FD", "FD05", null
+        ));
+        Review expected = em.persist(review(FeedbackType.ENTERED, 5));
+        em.persist(review(user, otherPlace, FeedbackType.DENIED, 1));
+        em.flush();
+
+        List<Review> result = reviewRepository
+            .findByPlaceIdAndUserEmailOrderByCreatedAtDescIdDesc(place.getId(), user.getEmail());
+
+        assertThat(result).containsExactly(expected);
+    }
+
+    @Test
+    @DisplayName("전체 리뷰 페이지는 현재 사용자의 리뷰를 제외한다")
+    void findByPlaceIdExcludingUser_내리뷰제외() {
+        User otherUser = em.persist(User.createLocal("other@email.com", "encoded-password", "다른사용자"));
+        em.persist(review(FeedbackType.ENTERED, 5));
+        Review otherReview = em.persist(review(otherUser, place, FeedbackType.ENTERED, 4));
+        em.flush();
+
+        Page<Review> result = reviewRepository.findByPlaceIdExcludingUser(
+            place.getId(),
+            user.getEmail(),
+            PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"))
+        );
+
+        assertThat(result.getContent()).containsExactly(otherReview);
+        assertThat(result.getTotalElements()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("비회원용 장소 리뷰 조회는 모든 사용자의 리뷰를 반환한다")
+    void findByPlaceId_전체리뷰조회() {
+        User otherUser = em.persist(User.createLocal("other@email.com", "encoded-password", "다른사용자"));
+        Review ownReview = em.persist(review(FeedbackType.ENTERED, 5));
+        Review otherReview = em.persist(review(otherUser, place, FeedbackType.ENTERED, 4));
+        em.flush();
+
+        Page<Review> result = reviewRepository.findByPlaceId(
+            place.getId(),
+            PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"))
+        );
+
+        assertThat(result.getContent()).containsExactlyInAnyOrder(ownReview, otherReview);
+        assertThat(result.getTotalElements()).isEqualTo(2);
+    }
+
+    // 헬퍼
+    private Review review(FeedbackType feedbackType, int rating) {
+        return review(user, place, feedbackType, rating);
+    }
+
+    private Review review(User reviewUser, Place reviewPlace, FeedbackType feedbackType, int rating) {
+        return Review.create(
+            reviewUser,
+            reviewPlace,
+            null,
+            feedbackType,
+            null,
+            null,
+            rating,
+            null,
+            null
+        );
+    }
+}

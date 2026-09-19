@@ -4,7 +4,7 @@ import com.tmd.backend.dto.request.image.PresignedUrlRequest;
 import com.tmd.backend.dto.response.SuccessResponseDto;
 import com.tmd.backend.dto.response.image.ImageUploadCompleteResponse;
 import com.tmd.backend.dto.response.image.PresignedUrlResponse;
-import com.tmd.backend.service.ImageService;
+import com.tmd.backend.service.image.ImageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

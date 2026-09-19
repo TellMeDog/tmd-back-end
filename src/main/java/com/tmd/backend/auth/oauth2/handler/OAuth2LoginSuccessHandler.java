@@ -1,7 +1,7 @@
 package com.tmd.backend.auth.oauth2.handler;
 
 import com.tmd.backend.auth.common.JwtToken;
-import com.tmd.backend.service.AuthService;
+import com.tmd.backend.service.auth.AuthService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

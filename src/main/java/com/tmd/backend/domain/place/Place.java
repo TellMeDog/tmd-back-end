@@ -1,7 +1,7 @@
 package com.tmd.backend.domain.place;
 
 import com.tmd.backend.domain.review.Review;
-import com.tmd.backend.external.TourApiPlaceItem;
+import com.tmd.backend.external.tourapi.TourApiPlaceItem;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;

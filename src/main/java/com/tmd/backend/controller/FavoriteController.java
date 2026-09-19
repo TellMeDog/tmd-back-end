@@ -3,7 +3,7 @@ package com.tmd.backend.controller;
 import com.tmd.backend.dto.response.PageResponse;
 import com.tmd.backend.dto.response.SuccessResponseDto;
 import com.tmd.backend.dto.response.favorite.FavoriteResponse;
-import com.tmd.backend.service.FavoriteService;
+import com.tmd.backend.service.favorite.FavoriteService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;

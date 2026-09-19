@@ -6,7 +6,7 @@ import com.tmd.backend.dto.response.place.PlaceCategoryResponse;
 import com.tmd.backend.dto.response.place.PlaceDetailResponse;
 import com.tmd.backend.dto.response.place.PlaceMapMarkerResponse;
 import com.tmd.backend.dto.response.place.PlaceMarkerResponse;
-import com.tmd.backend.service.PlaceService;
+import com.tmd.backend.service.place.PlaceService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;

@@ -7,7 +7,7 @@ import com.tmd.backend.dto.request.SignUpRequest;
 import com.tmd.backend.dto.request.VerificationCodeRequest;
 import com.tmd.backend.dto.response.LoginResponse;
 import com.tmd.backend.dto.response.SuccessResponseDto;
-import com.tmd.backend.service.AuthService;
+import com.tmd.backend.service.auth.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

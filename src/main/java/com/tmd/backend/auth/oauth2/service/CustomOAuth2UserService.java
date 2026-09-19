@@ -5,7 +5,7 @@ import com.tmd.backend.auth.oauth2.info.OAuth2UserInfo;
 import com.tmd.backend.auth.oauth2.info.OAuth2UserInfoFactory;
 import com.tmd.backend.domain.user.AuthProvider;
 import com.tmd.backend.domain.user.User;
-import com.tmd.backend.repository.UserRepository;
+import com.tmd.backend.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;

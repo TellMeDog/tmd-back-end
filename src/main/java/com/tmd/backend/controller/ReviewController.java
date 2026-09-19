@@ -6,7 +6,7 @@ import com.tmd.backend.dto.response.PageResponse;
 import com.tmd.backend.dto.response.SuccessResponseDto;
 import com.tmd.backend.dto.response.review.MyReviewListResponse;
 import com.tmd.backend.dto.response.review.ReviewDetailResponse;
-import com.tmd.backend.service.ReviewService;
+import com.tmd.backend.service.review.ReviewService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
