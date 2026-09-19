@@ -8,14 +8,18 @@ import com.tmd.backend.domain.pet.Pet;
 import com.tmd.backend.domain.place.Place;
 import com.tmd.backend.domain.place.PlacePetInfo;
 import com.tmd.backend.domain.place.TourCategory;
+import com.tmd.backend.dto.response.PageResponse;
 import com.tmd.backend.dto.response.place.PlaceCategoryResponse;
 import com.tmd.backend.dto.response.place.PlaceDetailResponse;
+import com.tmd.backend.dto.response.place.PlaceMapMarkerResponse;
 import com.tmd.backend.dto.response.place.PlaceMarkerResponse;
 import com.tmd.backend.exception.BaseException;
 import com.tmd.backend.repository.PetRepository;
 import com.tmd.backend.repository.PlaceRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -23,6 +27,7 @@ import org.springframework.util.StringUtils;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -42,19 +47,16 @@ public class PlaceService {
 
     // 프론트엔드가 현재 화면보다 넓게 계산한 bbox를 전달한다.
     // 백엔드는 전달받은 bbox를 그대로 조회하며 화면 이동에 따른 재검색 여부는 프론트엔드가 판단한다.
-    public List<PlaceMarkerResponse> searchByCategory(
+    public List<PlaceMapMarkerResponse> searchByCategory(
         String categoryCode,
         String email,
         Long petId,
         double swLat,
         double swLng,
         double neLat,
-        double neLng,
-        double currMapX,
-        double currMapY
+        double neLng
     ) {
         validateMapBounds(swLat, swLng, neLat, neLng);
-        validateCoordinates(currMapY, currMapX);
         Pet pet = findPetIfProvided(petId, email);
         TourCategory category = findCategoryIfProvided(categoryCode);
 
@@ -69,11 +71,39 @@ public class PlaceService {
                 category.getCode()
             );
 
-        return toMarkerResponses(places, email, pet, currMapX, currMapY).stream()
-            .sorted(Comparator
-                .comparingLong(PlaceMarkerResponse::getDistance)
-                .thenComparing(PlaceMarkerResponse::getPlaceId))
+        return toMapMarkerResponses(places, pet).stream()
+            .sorted(Comparator.comparing(PlaceMapMarkerResponse::placeId))
             .toList();
+    }
+
+    public PageResponse<PlaceMarkerResponse> searchCategoryList(
+        String categoryCode,
+        String email,
+        Long petId,
+        double swLat,
+        double swLng,
+        double neLat,
+        double neLng,
+        double currMapX,
+        double currMapY,
+        int page,
+        int size
+    ) {
+        validateMapBounds(swLat, swLng, neLat, neLng);
+        validateCoordinates(currMapY, currMapX);
+        validatePageRequest(page, size);
+        Pet pet = findPetIfProvided(petId, email);
+        TourCategory category = findCategoryIfProvided(categoryCode);
+        PageRequest pageable = PageRequest.of(page, size);
+        Page<Place> places = category == null
+            ? placeRepository.findPlacePageWithinBounds(
+                swLat, swLng, neLat, neLng, currMapX, currMapY, pageable
+            )
+            : placeRepository.findPlacePageWithCategory(
+                swLat, swLng, neLat, neLng, category.getDepth(), category.getCode(),
+                currMapX, currMapY, pageable
+            );
+        return toPlacePageResponse(places, email, pet, currMapX, currMapY);
     }
 
     public List<PlaceCategoryResponse> getCategories() {
@@ -81,25 +111,33 @@ public class PlaceService {
     }
 
     // 검색창에 검색 로직
-    public List<PlaceMarkerResponse> searchByKeyword(
+    public List<PlaceMapMarkerResponse> searchByKeyword(String keyword, Long petId, String email) {
+        String trimmedKeyword = validateKeyword(keyword);
+        Pet pet = findPetIfProvided(petId, email);
+
+        List<Place> places = placeRepository.findPlacesWithKeyword(trimmedKeyword);
+        return toMapMarkerResponses(places, pet).stream()
+            .sorted(Comparator.comparing(PlaceMapMarkerResponse::placeId))
+            .toList();
+    }
+
+    public PageResponse<PlaceMarkerResponse> searchKeywordList(
         String keyword,
         Long petId,
         String email,
         double currMapX,
-        double currMapY
+        double currMapY,
+        int page,
+        int size
     ) {
-        String trimmedKeyword = keyword == null ? "" : keyword.trim();
-        if (trimmedKeyword.isBlank()) {
-            throw new BaseException(ErrorCode.PLACE_NOT_FOUND);
-        }
+        String trimmedKeyword = validateKeyword(keyword);
+        validateCoordinates(currMapY, currMapX);
+        validatePageRequest(page, size);
         Pet pet = findPetIfProvided(petId, email);
-
-        List<Place> places = placeRepository.findPlacesWithKeyword(trimmedKeyword);
-        return toMarkerResponses(places, email, pet, currMapX, currMapY).stream()
-            .sorted(Comparator
-                .comparingLong(PlaceMarkerResponse::getDistance)
-                .thenComparing(PlaceMarkerResponse::getPlaceId))
-            .toList();
+        Page<Place> places = placeRepository.findPlacePageWithKeyword(
+            trimmedKeyword, currMapX, currMapY, PageRequest.of(page, size)
+        );
+        return toPlacePageResponse(places, email, pet, currMapX, currMapY);
     }
 
     // 지역별 검색 기능
@@ -184,12 +222,12 @@ public class PlaceService {
 
         return PlaceDetailResponse.builder()
             .placeMarkerResponse(toMarkerResponse(
-                email,
                 place,
                 pet,
                 mapX,
                 mapY,
-                reviewService.getAverageRating(placeId)
+                reviewService.getAverageRating(placeId),
+                StringUtils.hasText(email) && favoriteService.isFavorite(email, placeId)
             ))
             .zipCode(place.getZipCode())
             .addr1(place.getAddr1())
@@ -212,33 +250,33 @@ public class PlaceService {
         double currMapX,
         double currMapY
     ) {
-        Map<Long, Double> averageRatings = reviewService.getAverageRatings(
-            places.stream().map(Place::getId).toList()
-        );
+        List<Long> placeIds = places.stream().map(Place::getId).toList();
+        Map<Long, Double> averageRatings = reviewService.getAverageRatings(placeIds);
+        Set<Long> favoritePlaceIds = StringUtils.hasText(email)
+            ? favoriteService.getFavoritePlaceIds(email, placeIds)
+            : Set.of();
         return places.stream()
             .map(place -> toMarkerResponse(
-                email,
                 place,
                 pet,
                 currMapX,
                 currMapY,
-                averageRatings.getOrDefault(place.getId(), 0.0)
+                averageRatings.getOrDefault(place.getId(), 0.0),
+                favoritePlaceIds.contains(place.getId())
             ))
             .toList();
     }
 
     private PlaceMarkerResponse toMarkerResponse(
-        String email,
         Place place,
         Pet pet,
         double currMapX,
         double currMapY,
-        double averageRating
+        double averageRating,
+        boolean isFavorite
     ) {
         MarkerColor color = markerColorService.calculateMarkerColor(place.getPlacePetPolicy(), pet);
         long distance = calculateDistance(currMapY, currMapX, place.getMapY(), place.getMapX());
-        boolean isFavorite = StringUtils.hasText(email)
-            && favoriteService.isFavorite(email, place.getId());
         return PlaceMarkerResponse.builder()
             .placeId(place.getId())
             .title(place.getTitle())
@@ -252,10 +290,55 @@ public class PlaceService {
             .build();
     }
 
+    private List<PlaceMapMarkerResponse> toMapMarkerResponses(List<Place> places, Pet pet) {
+        return places.stream()
+            .map(place -> new PlaceMapMarkerResponse(
+                place.getId(),
+                place.getMapX(),
+                place.getMapY(),
+                markerColorService.calculateMarkerColor(place.getPlacePetPolicy(), pet).name()
+            ))
+            .toList();
+    }
+
+    private PageResponse<PlaceMarkerResponse> toPlacePageResponse(
+        Page<Place> places,
+        String email,
+        Pet pet,
+        double currMapX,
+        double currMapY
+    ) {
+        List<PlaceMarkerResponse> content = toMarkerResponses(
+            places.getContent(), email, pet, currMapX, currMapY
+        );
+        return new PageResponse<>(
+            content,
+            places.getNumber(),
+            places.getSize(),
+            places.getTotalElements(),
+            places.getTotalPages(),
+            places.hasNext()
+        );
+    }
+
     private TourCategory findCategoryIfProvided(String categoryCode) {
         return StringUtils.hasText(categoryCode)
             ? placeCategoryService.getActiveCategory(categoryCode)
             : null;
+    }
+
+    private String validateKeyword(String keyword) {
+        String trimmedKeyword = keyword == null ? "" : keyword.trim();
+        if (trimmedKeyword.isBlank()) {
+            throw new BaseException(ErrorCode.PLACE_NOT_FOUND);
+        }
+        return trimmedKeyword;
+    }
+
+    private void validatePageRequest(int page, int size) {
+        if (page < 0 || size < 1 || size > 100) {
+            throw new BaseException(ErrorCode.VALIDATION_ERROR);
+        }
     }
 
     private Pet findPetIfProvided(Long petId, String email) {

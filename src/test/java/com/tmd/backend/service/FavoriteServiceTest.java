@@ -114,6 +114,17 @@ class FavoriteServiceTest {
         assertThat(captor.getValue()).isSameAs(favorite);
     }
 
+    @Test
+    void returnsFavoritePlaceIdsInSingleBatchQuery() {
+        given(favoriteRepository.findPlaceIdsByUserEmailAndPlaceIdIn(
+            "user@example.com", List.of(1L, 2L, 3L)
+        )).willReturn(List.of(1L, 3L));
+
+        assertThat(service().getFavoritePlaceIds(
+            "user@example.com", List.of(1L, 2L, 3L)
+        )).containsExactlyInAnyOrder(1L, 3L);
+    }
+
     private FavoriteService service() {
         return new FavoriteService(
             favoriteRepository,

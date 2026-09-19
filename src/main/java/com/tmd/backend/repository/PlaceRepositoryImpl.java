@@ -1,12 +1,17 @@
 package com.tmd.backend.repository;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.tmd.backend.domain.place.Place;
 import com.tmd.backend.domain.place.QPlace;
 import com.tmd.backend.domain.place.QPlacePetInfo;
 import com.tmd.backend.domain.place.QPlacePetPolicy;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -52,9 +57,49 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom{
     public List<Place> findPlacesWithKeyword(String keyword) {
         return jpaQueryFactory
             .selectFrom(place)
-            .leftJoin(place.placePetInfo, placePetInfo).fetchJoin()
+            .leftJoin(place.placePetPolicy, placePetPolicy).fetchJoin()
             .where(activePlace(), place.title.contains(keyword))
             .fetch();
+    }
+
+    @Override
+    public Page<Place> findPlacePageWithinBounds(double swLat, double swLng, double neLat, double neLng,
+                                                 double currMapX, double currMapY, Pageable pageable) {
+        return findPage(
+            currMapX,
+            currMapY,
+            pageable,
+            activePlace(),
+            place.mapX.between(swLng, neLng),
+            place.mapY.between(swLat, neLat)
+        );
+    }
+
+    @Override
+    public Page<Place> findPlacePageWithCategory(double swLat, double swLng, double neLat, double neLng,
+                                                 int categoryDepth, String categoryCode,
+                                                 double currMapX, double currMapY, Pageable pageable) {
+        return findPage(
+            currMapX,
+            currMapY,
+            pageable,
+            activePlace(),
+            place.mapX.between(swLng, neLng),
+            place.mapY.between(swLat, neLat),
+            categoryEq(categoryDepth, categoryCode)
+        );
+    }
+
+    @Override
+    public Page<Place> findPlacePageWithKeyword(String keyword, double currMapX, double currMapY,
+                                                Pageable pageable) {
+        return findPage(
+            currMapX,
+            currMapY,
+            pageable,
+            activePlace(),
+            place.title.contains(keyword)
+        );
     }
 
     @Override
@@ -104,5 +149,39 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom{
             case 3 -> place.lclsSystm3.eq(code);
             default -> throw new IllegalArgumentException("Category depth must be between 1 and 3");
         };
+    }
+
+    private Page<Place> findPage(double currMapX, double currMapY, Pageable pageable,
+                                 BooleanExpression... predicates) {
+        NumberExpression<Double> distance = distanceExpression(currMapX, currMapY);
+        List<Place> content = jpaQueryFactory
+            .selectFrom(place)
+            .leftJoin(place.placePetPolicy, placePetPolicy).fetchJoin()
+            .where(predicates)
+            .orderBy(distance.asc(), place.id.asc())
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
+
+        Long total = jpaQueryFactory
+            .select(place.count())
+            .from(place)
+            .where(predicates)
+            .fetchOne();
+        return new PageImpl<>(content, pageable, total == null ? 0 : total);
+    }
+
+    private NumberExpression<Double> distanceExpression(double currMapX, double currMapY) {
+        return Expressions.numberTemplate(
+            Double.class,
+            "6371000.0 * acos(least(1.0, greatest(-1.0, " +
+                "cos(radians({0})) * cos(radians({1})) * " +
+                "cos(radians({2}) - radians({3})) + " +
+                "sin(radians({0})) * sin(radians({1})))))",
+            currMapY,
+            place.mapY,
+            place.mapX,
+            currMapX
+        );
     }
 }

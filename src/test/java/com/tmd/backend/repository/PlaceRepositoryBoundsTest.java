@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
 
@@ -56,6 +57,30 @@ class PlaceRepositoryBoundsTest {
         assertThat(placeRepository.findPlacesWithCategory(
             37.0, 127.0, 38.0, 128.0, 3, "FD050100"
         )).extracting(Place::getContentId).containsExactly("cafe");
+    }
+
+    @Test
+    void bbox_목록을_거리순으로_페이지_조회한다() {
+        em.persist(place("far", 127.2, 37.2));
+        em.persist(place("near", 127.01, 37.01));
+        em.flush();
+        em.clear();
+
+        var firstPage = placeRepository.findPlacePageWithinBounds(
+            37.0, 127.0, 38.0, 128.0,
+            127.0, 37.0,
+            PageRequest.of(0, 1)
+        );
+        var secondPage = placeRepository.findPlacePageWithinBounds(
+            37.0, 127.0, 38.0, 128.0,
+            127.0, 37.0,
+            PageRequest.of(1, 1)
+        );
+
+        assertThat(firstPage.getContent()).extracting(Place::getContentId).containsExactly("near");
+        assertThat(secondPage.getContent()).extracting(Place::getContentId).containsExactly("far");
+        assertThat(firstPage.getTotalElements()).isEqualTo(2);
+        assertThat(firstPage.getTotalPages()).isEqualTo(2);
     }
 
     private Place place(String contentId, double mapX, double mapY) {

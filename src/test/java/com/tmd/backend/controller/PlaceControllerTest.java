@@ -21,12 +21,12 @@ class PlaceControllerTest {
             "anonymousUser",
             AuthorityUtils.createAuthorityList("ROLE_ANONYMOUS")
         );
-        when(placeService.searchByKeyword("공원", null, null, 127.0, 37.0))
+        when(placeService.searchByKeyword("공원", null, null))
             .thenReturn(List.of());
 
-        controller.searchPlaces("공원", null, 127.0, 37.0, anonymous);
+        controller.searchPlaces("공원", null, anonymous);
 
-        verify(placeService).searchByKeyword("공원", null, null, 127.0, 37.0);
+        verify(placeService).searchByKeyword("공원", null, null);
     }
 
     @Test
@@ -51,11 +51,11 @@ class PlaceControllerTest {
                 null,
                 AuthorityUtils.NO_AUTHORITIES
             );
-        when(placeService.searchByKeyword("공원", null, "test@email.com", 127.0, 37.0))
+        when(placeService.searchByKeyword("공원", null, "test@email.com"))
             .thenReturn(List.of());
 
-        controller.searchPlaces("공원", null, 127.0, 37.0, authentication);
+        controller.searchPlaces("공원", null, authentication);
 
-        verify(placeService).searchByKeyword("공원", null, "test@email.com", 127.0, 37.0);
+        verify(placeService).searchByKeyword("공원", null, "test@email.com");
     }
 }

@@ -6,6 +6,7 @@ import com.tmd.backend.domain.pet.Pet;
 import com.tmd.backend.domain.place.Place;
 import com.tmd.backend.dto.response.PageResponse;
 import com.tmd.backend.dto.response.place.PlaceDetailResponse;
+import com.tmd.backend.dto.response.place.PlaceMapMarkerResponse;
 import com.tmd.backend.dto.response.place.PlaceMarkerResponse;
 import com.tmd.backend.exception.BaseException;
 import com.tmd.backend.repository.PetRepository;
@@ -16,12 +17,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.LongStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,6 +41,7 @@ class PlaceServiceTest {
     @Mock MarkerColorService markerColorService;
     @Mock ReviewService reviewService;
     @Mock FavoriteService favoriteService;
+    @Mock PlaceCategoryService placeCategoryService;
 
     @InjectMocks PlaceService placeService;
 
@@ -84,7 +89,8 @@ class PlaceServiceTest {
         )).willReturn(List.of(place));
         given(reviewService.getAverageRatings(List.of(1L))).willReturn(Map.of(1L, 4.5));
         given(markerColorService.calculateMarkerColor(null, pet)).willReturn(MarkerColor.GREEN);
-        given(favoriteService.isFavorite("test@email.com", 1L)).willReturn(true);
+        given(favoriteService.getFavoritePlaceIds("test@email.com", List.of(1L)))
+            .willReturn(Set.of(1L));
 
         List<PlaceMarkerResponse> result = placeService.init(
             "test@email.com", 1L, 127.0, 37.0
@@ -111,13 +117,28 @@ class PlaceServiceTest {
     // ===== searchByKeyword =====
 
     @Test
+    void keywordMarkerSearchReturnsAllOneThousandLightweightMarkers() {
+        List<Place> places = LongStream.rangeClosed(1, 1_000)
+            .mapToObj(id -> place(id, 127.0, 37.0))
+            .toList();
+        given(placeRepository.findPlacesWithKeyword("공원")).willReturn(places);
+        given(markerColorService.calculateMarkerColor(null, null)).willReturn(MarkerColor.GREY);
+
+        List<PlaceMapMarkerResponse> result = placeService.searchByKeyword("공원", null, null);
+
+        assertThat(result).hasSize(1_000);
+        assertThat(result).extracting(PlaceMapMarkerResponse::placeId).isSorted();
+        verifyNoInteractions(reviewService, favoriteService);
+    }
+
+    @Test
     @DisplayName("키워드 검색은 DB에 저장된 장소만 조회")
     void searchByKeyword_DB조회() {
         given(placeRepository.findPlacesWithKeyword("강남")).willReturn(List.of());
         given(petRepository.findByIdAndUserEmail(1L, "test@email.com"))
             .willReturn(Optional.of(mock(Pet.class)));
 
-        placeService.searchByKeyword("강남", 1L, "test@email.com", 127.0, 37.0);
+        placeService.searchByKeyword("강남", 1L, "test@email.com");
 
         verify(placeRepository).findPlacesWithKeyword("강남");
     }
@@ -129,7 +150,7 @@ class PlaceServiceTest {
         given(petRepository.findByIdAndUserEmail(1L, "test@email.com"))
             .willReturn(Optional.of(mock(Pet.class)));
 
-        placeService.searchByKeyword(" 강남 ", 1L, "test@email.com", 127.0, 37.0);
+        placeService.searchByKeyword(" 강남 ", 1L, "test@email.com");
 
         verify(placeRepository).findPlacesWithKeyword("강남");
     }
@@ -137,7 +158,7 @@ class PlaceServiceTest {
     @Test
     @DisplayName("빈 키워드는 장소를 조회하지 않고 예외")
     void searchByKeyword_빈키워드_예외() {
-        assertThatThrownBy(() -> placeService.searchByKeyword(" ", 1L, "test@email.com", 127.0, 37.0))
+        assertThatThrownBy(() -> placeService.searchByKeyword(" ", 1L, "test@email.com"))
             .isInstanceOf(BaseException.class);
 
         verifyNoInteractions(placeRepository);
@@ -149,7 +170,7 @@ class PlaceServiceTest {
         given(petRepository.findByIdAndUserEmail(99L, "test@email.com"))
             .willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> placeService.searchByKeyword("강남", 99L, "test@email.com", 127.0, 37.0))
+        assertThatThrownBy(() -> placeService.searchByKeyword("강남", 99L, "test@email.com"))
             .isInstanceOf(BaseException.class)
             .satisfies(e -> org.assertj.core.api.Assertions
                 .assertThat(((BaseException) e).getErrorCode())
@@ -159,37 +180,54 @@ class PlaceServiceTest {
     }
 
     @Test
-    @DisplayName("로그인 회원도 petId를 생략하면 회색 마커와 즐겨찾기 정보를 받음")
+    @DisplayName("지도 마커 검색은 경량 마커만 반환하고 평점과 즐겨찾기를 조회하지 않음")
     void searchByKeyword_petId없으면_회색마커() {
         Place place = mock(Place.class);
         given(place.getId()).willReturn(1L);
         given(place.getMapX()).willReturn(127.0);
         given(place.getMapY()).willReturn(37.0);
         given(placeRepository.findPlacesWithKeyword("강남")).willReturn(List.of(place));
-        given(reviewService.getAverageRatings(List.of(1L))).willReturn(Map.of());
         given(markerColorService.calculateMarkerColor(null, null)).willReturn(MarkerColor.GREY);
-        given(favoriteService.isFavorite("test@email.com", 1L)).willReturn(true);
 
-        List<PlaceMarkerResponse> result = placeService.searchByKeyword(
-            "강남", null, "test@email.com", 127.0, 37.0
-        );
+        List<PlaceMapMarkerResponse> result = placeService.searchByKeyword("강남", null, "test@email.com");
 
         assertThat(result).singleElement().satisfies(marker -> {
-            assertThat(marker.getMarkerColor()).isEqualTo("GREY");
-            assertThat(marker.isFavorite()).isTrue();
+            assertThat(marker.markerColor()).isEqualTo("GREY");
+            assertThat(marker.placeId()).isEqualTo(1L);
         });
-        verifyNoInteractions(petRepository);
+        verifyNoInteractions(petRepository, reviewService, favoriteService);
     }
 
     @Test
     @DisplayName("비회원이 petId를 전달하면 NOT_OWNER_OF_DOG 예외")
     void searchByKeyword_비회원petId_예외() {
-        assertThatThrownBy(() -> placeService.searchByKeyword("강남", 1L, null, 127.0, 37.0))
+        assertThatThrownBy(() -> placeService.searchByKeyword("강남", 1L, null))
             .isInstanceOf(BaseException.class)
             .satisfies(e -> assertThat(((BaseException) e).getErrorCode())
                 .isEqualTo(ErrorCode.NOT_OWNER_OF_DOG));
 
         verifyNoInteractions(petRepository, placeRepository);
+    }
+
+    @Test
+    void keywordListReturnsPagedPlacesInRepositoryOrder() {
+        Place first = place(1L, 127.01, 37.01);
+        Place second = place(2L, 127.02, 37.02);
+        PageRequest pageable = PageRequest.of(0, 2);
+        given(placeRepository.findPlacePageWithKeyword("공원", 127.0, 37.0, pageable))
+            .willReturn(new PageImpl<>(List.of(first, second), pageable, 1_000));
+        given(reviewService.getAverageRatings(List.of(1L, 2L))).willReturn(Map.of(1L, 4.5));
+        given(markerColorService.calculateMarkerColor(null, null)).willReturn(MarkerColor.GREY);
+
+        PageResponse<PlaceMarkerResponse> result = placeService.searchKeywordList(
+            "공원", null, null, 127.0, 37.0, 0, 2
+        );
+
+        assertThat(result.getContent()).extracting(PlaceMarkerResponse::getPlaceId)
+            .containsExactly(1L, 2L);
+        assertThat(result.getTotalElements()).isEqualTo(1_000);
+        assertThat(result.isHasNext()).isTrue();
+        verifyNoInteractions(favoriteService);
     }
 
     @Test

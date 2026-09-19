@@ -20,6 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -65,6 +67,13 @@ public class FavoriteService {
     public boolean isFavorite(String email, Long placeId) {
         User user = findUser(email);
         return favoriteRepository.existsByUserIdAndPlaceId(user.getId(), placeId);
+    }
+
+    public Set<Long> getFavoritePlaceIds(String email, List<Long> placeIds) {
+        if (placeIds.isEmpty()) return Set.of();
+        return favoriteRepository.findPlaceIdsByUserEmailAndPlaceIdIn(email, placeIds)
+            .stream()
+            .collect(Collectors.toUnmodifiableSet());
     }
 
     @Transactional
