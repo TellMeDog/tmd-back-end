@@ -177,6 +177,7 @@ class ReviewServiceTest {
         Place place = mock(Place.class);
         given(place.getId()).willReturn(1L);
         given(review.getPlace()).willReturn(place);
+        given(review.getImageKey()).willReturn("images/review/delete.jpg");
         given(reviewRepository.findByIdAndUserEmail(1L, "test@email.com"))
             .willReturn(Optional.of(review));
 
@@ -185,7 +186,33 @@ class ReviewServiceTest {
 
         reviewService.deleteReview("test@email.com", 1L);
 
-        verify(reviewRepository).delete(review);
+        verify(imageService).markForDeletion("images/review/delete.jpg");
+        verify(reviewRepository).deleteAll(List.of(review));
+        verify(reviewRepository).flush();
+        verify(mockCache, times(2)).evict(1L);
+    }
+
+    @Test
+    void deleteReviewsByPetId_deletesImagesAndEvictsEachPlaceOnce() {
+        Review firstReview = mock(Review.class);
+        Review secondReview = mock(Review.class);
+        Place place = mock(Place.class);
+        given(place.getId()).willReturn(1L);
+        given(firstReview.getPlace()).willReturn(place);
+        given(secondReview.getPlace()).willReturn(place);
+        given(firstReview.getImageKey()).willReturn("images/review/first.jpg");
+        given(secondReview.getImageKey()).willReturn("images/review/second.jpg");
+        given(reviewRepository.findAllByPetId(10L))
+            .willReturn(List.of(firstReview, secondReview));
+        Cache mockCache = mock(Cache.class);
+        given(cacheManager.getCache(any())).willReturn(mockCache);
+
+        reviewService.deleteReviewsByPetId(10L);
+
+        verify(imageService).markForDeletion("images/review/first.jpg");
+        verify(imageService).markForDeletion("images/review/second.jpg");
+        verify(reviewRepository).deleteAll(List.of(firstReview, secondReview));
+        verify(reviewRepository).flush();
         verify(mockCache, times(2)).evict(1L);
     }
 

@@ -44,6 +44,8 @@ public class UserService {
     // 회원탈퇴 시 pet, favorite 엔티티 연쇄 삭제 위해 작성
     private final PetRepository petRepository;
     private final FavoriteRepository favoriteRepository;
+    private final ReviewService reviewService;
+    private final ImageService imageService;
 
     public UserResponse getMyInfo(String email) {
         // 이메일을 받아서 UserResponse를 리턴하는 메서드 시작
@@ -87,16 +89,21 @@ public class UserService {
     // (pet, review는 cascade고 favorite은 여기서 삭제)
     @Transactional
     public void withdraw(String email) {
-        User user = userRepository.findByEmail(email)  // email로 탈퇴할 User를 찾음
+        User user = userRepository.findByEmail(email)
             .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
 
-//        List<Pet> pets = petRepository.findByUserId(user.getId());
-//        petRepository.deleteAll(pets);  // 이 사용자가 등록한 반려견들을 먼저 전부 삭제
+        Long userId = user.getId();
+        List<Pet> pets = petRepository.findByUserId(userId);
 
-        // Pageable.unpaged() = 페이징 없이 전체 다 가져오라는 뜻
-        Page<Favorite> favorites = favoriteRepository.findAllByUserId(user.getId(), Pageable.unpaged());
-        favoriteRepository.deleteAll(favorites);  // 이 사용자의 즐겨찾기들도 먼저 전부 삭제
+        imageService.markAllForDeletion(userId);
+        reviewService.deleteReviewsByUserId(userId);
+        pets.forEach(pet -> imageService.markForDeletion(pet.getImageKey()));
+        petRepository.deleteAll(pets);
+        petRepository.flush();
 
-        userRepository.delete(user);  // 연관된 데이터를 다 지운 뒤, 마지막으로 User 자체를 삭제
+        Page<Favorite> favorites = favoriteRepository.findAllByUserId(userId, Pageable.unpaged());
+        favoriteRepository.deleteAllInBatch(favorites.getContent());
+
+        userRepository.delete(user);
     }
 }

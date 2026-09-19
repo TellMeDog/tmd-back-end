@@ -15,6 +15,12 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     @EntityGraph(attributePaths = "place")
     Optional<Review> findByIdAndUserEmail(Long reviewId, String email);
 
+    @EntityGraph(attributePaths = "place")
+    List<Review> findAllByPetId(Long petId);
+
+    @EntityGraph(attributePaths = "place")
+    List<Review> findAllByUserId(Long userId);
+
     @Query(
         value = """
             SELECT r

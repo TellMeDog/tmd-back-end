@@ -31,10 +31,11 @@ class PetServiceTest {
     @Mock private UserRepository userRepository;
     @Mock private PetRepository petRepository;
     @Mock private ImageService imageService;
+    @Mock private ReviewService reviewService;
 
     @Test
     void registersPetWithOwnedReadyImageUpload() {
-        PetService petService = new PetService(userRepository, petRepository, imageService);
+        PetService petService = new PetService(userRepository, petRepository, imageService, reviewService);
         User user = mock(User.class);
         PetRegisterRequest request = mock(PetRegisterRequest.class);
         UUID uploadId = UUID.randomUUID();
@@ -80,7 +81,7 @@ class PetServiceTest {
 
     @Test
     void updatesWeightAndEquipmentAndRemovesImage() {
-        PetService petService = new PetService(userRepository, petRepository, imageService);
+        PetService petService = new PetService(userRepository, petRepository, imageService, reviewService);
         User user = mock(User.class);
         Pet pet = Pet.create(
             user, "멍이", PetBreed.SHIBA_INU, 8.5, "images/pet/old.jpg", false, false, false);
@@ -104,8 +105,23 @@ class PetServiceTest {
         verify(imageService).markForDeletion("images/pet/old.jpg");
     }
 
+    @Test
+    void deletesPetReviewsAndImagesBeforeDeletingPet() {
+        PetService petService = new PetService(userRepository, petRepository, imageService, reviewService);
+        Pet pet = mock(Pet.class);
+        given(pet.getImageKey()).willReturn("images/pet/delete.jpg");
+        given(petRepository.findByIdAndUserEmail(1L, "user@example.com"))
+            .willReturn(Optional.of(pet));
+
+        petService.deletePet("user@example.com", 1L);
+
+        verify(reviewService).deleteReviewsByPetId(1L);
+        verify(imageService).markForDeletion("images/pet/delete.jpg");
+        verify(petRepository).delete(pet);
+    }
+
     private void assertInvalidBreed(String breed) {
-        PetService petService = new PetService(userRepository, petRepository, imageService);
+        PetService petService = new PetService(userRepository, petRepository, imageService, reviewService);
         User user = mock(User.class);
         PetRegisterRequest request = mock(PetRegisterRequest.class);
         given(userRepository.findByEmail("user@example.com")).willReturn(Optional.of(user));

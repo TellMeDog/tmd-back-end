@@ -2,6 +2,9 @@ package com.tmd.backend.service;
 
 import com.tmd.backend.domain.user.AuthProvider;
 import com.tmd.backend.domain.user.User;
+import com.tmd.backend.domain.pet.Pet;
+import com.tmd.backend.domain.favorite.Favorite;
+import org.springframework.data.domain.PageImpl;
 import com.tmd.backend.repository.FavoriteRepository;
 import com.tmd.backend.repository.PetRepository;
 import com.tmd.backend.repository.UserRepository;
@@ -25,6 +28,8 @@ class UserServiceTest {
     @Mock UserRepository userRepository;
     @Mock PetRepository petRepository;
     @Mock FavoriteRepository favoriteRepository;
+    @Mock ReviewService reviewService;
+    @Mock ImageService imageService;
     @InjectMocks UserService userService;
 
     @Test
@@ -52,5 +57,28 @@ class UserServiceTest {
         given(petRepository.findIdsByUserId(7L)).willReturn(List.of());
 
         assertThat(userService.getMyInfo("user@example.com").getPetIds()).isEmpty();
+    }
+
+    @Test
+    void withdrawDeletesOwnedDataAndSchedulesImages() {
+        User user = mock(User.class);
+        Pet pet = mock(Pet.class);
+        Favorite favorite = mock(Favorite.class);
+        given(user.getId()).willReturn(7L);
+        given(pet.getImageKey()).willReturn("images/pet/delete.jpg");
+        given(userRepository.findByEmail("user@example.com")).willReturn(Optional.of(user));
+        given(petRepository.findByUserId(7L)).willReturn(List.of(pet));
+        given(favoriteRepository.findAllByUserId(7L, org.springframework.data.domain.Pageable.unpaged()))
+            .willReturn(new PageImpl<>(List.of(favorite)));
+
+        userService.withdraw("user@example.com");
+
+        verify(imageService).markAllForDeletion(7L);
+        verify(reviewService).deleteReviewsByUserId(7L);
+        verify(imageService).markForDeletion("images/pet/delete.jpg");
+        verify(petRepository).deleteAll(List.of(pet));
+        verify(petRepository).flush();
+        verify(favoriteRepository).deleteAllInBatch(List.of(favorite));
+        verify(userRepository).delete(user);
     }
 }

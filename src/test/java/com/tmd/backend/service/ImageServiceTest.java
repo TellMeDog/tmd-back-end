@@ -2,6 +2,7 @@ package com.tmd.backend.service;
 
 import com.tmd.backend.common.ErrorCode;
 import com.tmd.backend.domain.image.ImageUsage;
+import com.tmd.backend.domain.image.ImageDeletionTask;
 import com.tmd.backend.domain.image.ImageUpload;
 import com.tmd.backend.domain.image.ImageUploadStatus;
 import com.tmd.backend.domain.user.User;
@@ -24,6 +25,7 @@ import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.S3Client;
 import com.tmd.backend.repository.ImageUploadRepository;
+import com.tmd.backend.repository.ImageDeletionTaskRepository;
 import com.tmd.backend.repository.UserRepository;
 
 import java.util.Optional;
@@ -43,7 +45,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 
 @ExtendWith(MockitoExtension.class)
 class ImageServiceTest {
@@ -53,6 +58,7 @@ class ImageServiceTest {
     @Mock private S3Client r2Client;
     @Mock private UserRepository userRepository;
     @Mock private ImageUploadRepository imageUploadRepository;
+    @Mock private ImageDeletionTaskRepository imageDeletionTaskRepository;
 
     private ImageService imageService;
 
@@ -63,6 +69,7 @@ class ImageServiceTest {
             r2Client,
             userRepository,
             imageUploadRepository,
+            imageDeletionTaskRepository,
             "test-bucket",
             "https://images.example.com/",
             600,
@@ -177,6 +184,67 @@ class ImageServiceTest {
 
         verify(r2Client, times(2)).deleteObject(any(DeleteObjectRequest.class));
         verify(imageUploadRepository).delete(upload);
+    }
+
+    @Test
+    void queuesAttachedImageDeletionAndRemovesUploadMetadata() {
+        ImageUpload upload = mock(ImageUpload.class);
+        given(imageDeletionTaskRepository.findByObjectKey("images/review/delete.jpg"))
+            .willReturn(Optional.empty());
+        given(imageUploadRepository.findByFinalKey("images/review/delete.jpg"))
+            .willReturn(Optional.of(upload));
+
+        imageService.markForDeletion("images/review/delete.jpg");
+
+        ArgumentCaptor<ImageDeletionTask> captor = ArgumentCaptor.forClass(ImageDeletionTask.class);
+        verify(imageDeletionTaskRepository).save(captor.capture());
+        assertThat(captor.getValue().getObjectKey()).isEqualTo("images/review/delete.jpg");
+        verify(imageUploadRepository).delete(upload);
+    }
+
+    @Test
+    void queuesEveryUserUploadObjectBeforeRemovingMetadata() {
+        ImageUpload upload = mock(ImageUpload.class);
+        given(upload.getTemporaryKey()).willReturn("tmp/7/upload.jpg");
+        given(upload.getFinalKey()).willReturn("images/pet/upload.jpg");
+        given(imageUploadRepository.findAllByUserId(7L)).willReturn(java.util.List.of(upload));
+        given(imageDeletionTaskRepository.findByObjectKey(anyString())).willReturn(Optional.empty());
+
+        imageService.markAllForDeletion(7L);
+
+        ArgumentCaptor<ImageDeletionTask> captor = ArgumentCaptor.forClass(ImageDeletionTask.class);
+        verify(imageDeletionTaskRepository, times(2)).save(captor.capture());
+        assertThat(captor.getAllValues()).extracting(ImageDeletionTask::getObjectKey)
+            .containsExactly("tmp/7/upload.jpg", "images/pet/upload.jpg");
+        verify(imageUploadRepository).deleteAllInBatch(java.util.List.of(upload));
+    }
+
+    @Test
+    void deletesQueuedObjectAndTask() {
+        ImageDeletionTask task = mock(ImageDeletionTask.class);
+        given(task.getObjectKey()).willReturn("images/review/delete.jpg");
+        given(imageDeletionTaskRepository.findPendingForUpdate(any()))
+            .willReturn(java.util.List.of(task));
+
+        imageService.cleanupExpiredUploads();
+
+        verify(r2Client).deleteObject(any(DeleteObjectRequest.class));
+        verify(imageDeletionTaskRepository).delete(task);
+    }
+
+    @Test
+    void keepsDeletionTaskWhenR2DeletionFails() {
+        ImageDeletionTask task = mock(ImageDeletionTask.class);
+        given(task.getObjectKey()).willReturn("images/review/retry.jpg");
+        given(imageDeletionTaskRepository.findPendingForUpdate(any()))
+            .willReturn(java.util.List.of(task));
+        doThrow(software.amazon.awssdk.services.s3.model.S3Exception.builder()
+            .statusCode(500).message("failure").build())
+            .when(r2Client).deleteObject(any(DeleteObjectRequest.class));
+
+        imageService.cleanupExpiredUploads();
+
+        verify(imageDeletionTaskRepository, never()).delete(task);
     }
 
     @Test

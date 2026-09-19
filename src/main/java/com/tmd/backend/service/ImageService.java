@@ -1,6 +1,7 @@
 package com.tmd.backend.service;
 
 import com.tmd.backend.common.ErrorCode;
+import com.tmd.backend.domain.image.ImageDeletionTask;
 import com.tmd.backend.domain.image.ImageUpload;
 import com.tmd.backend.domain.image.ImageUploadStatus;
 import com.tmd.backend.domain.image.ImageUsage;
@@ -10,6 +11,7 @@ import com.tmd.backend.dto.response.image.ImageUploadCompleteResponse;
 import com.tmd.backend.dto.response.image.PresignedUrlResponse;
 import com.tmd.backend.exception.BaseException;
 import com.tmd.backend.repository.ImageUploadRepository;
+import com.tmd.backend.repository.ImageDeletionTaskRepository;
 import com.tmd.backend.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -53,6 +55,7 @@ public class ImageService {
     private final S3Client r2Client;
     private final UserRepository userRepository;
     private final ImageUploadRepository imageUploadRepository;
+    private final ImageDeletionTaskRepository imageDeletionTaskRepository;
     private final String bucket;
     private final String publicUrl;
     private final Duration presignedUrlTtl;
@@ -62,6 +65,7 @@ public class ImageService {
 
     public ImageService(S3Presigner r2Presigner, S3Client r2Client,
                         UserRepository userRepository, ImageUploadRepository imageUploadRepository,
+                        ImageDeletionTaskRepository imageDeletionTaskRepository,
                         @Value("${cloudflare.r2.bucket}") String bucket,
                         @Value("${cloudflare.r2.public-url}") String publicUrl,
                         @Value("${cloudflare.r2.presigned-url-ttl-seconds:600}") long presignedUrlTtlSeconds,
@@ -78,6 +82,7 @@ public class ImageService {
         this.r2Client = r2Client;
         this.userRepository = userRepository;
         this.imageUploadRepository = imageUploadRepository;
+        this.imageDeletionTaskRepository = imageDeletionTaskRepository;
         this.bucket = bucket;
         this.publicUrl = removeTrailingSlash(publicUrl);
         this.presignedUrlTtl = Duration.ofSeconds(presignedUrlTtlSeconds);
@@ -161,8 +166,21 @@ public class ImageService {
     @Transactional
     public void markForDeletion(String imageKey) {
         if (imageKey == null || imageKey.isBlank()) return;
+        enqueueDeletion(imageKey);
         imageUploadRepository.findByFinalKey(imageKey)
-            .ifPresent(upload -> upload.markDeletePending(LocalDateTime.now()));
+            .ifPresent(imageUploadRepository::delete);
+    }
+
+    @Transactional
+    public void markAllForDeletion(Long userId) {
+        List<ImageUpload> uploads = imageUploadRepository.findAllByUserId(userId);
+        for (ImageUpload upload : uploads) {
+            enqueueDeletion(upload.getTemporaryKey());
+            enqueueDeletion(upload.getFinalKey());
+        }
+        if (!uploads.isEmpty()) {
+            imageUploadRepository.deleteAllInBatch(uploads);
+        }
     }
 
     public String toPublicUrl(String imageKey) {
@@ -183,6 +201,23 @@ public class ImageService {
                 log.warn("Failed to clean up image upload {}. It will be retried.", upload.getId(), e);
             }
         }
+
+        List<ImageDeletionTask> deletionTasks = imageDeletionTaskRepository.findPendingForUpdate(
+            PageRequest.of(0, cleanupBatchSize));
+        for (ImageDeletionTask task : deletionTasks) {
+            try {
+                deleteObject(task.getObjectKey());
+                imageDeletionTaskRepository.delete(task);
+            } catch (SdkException e) {
+                log.warn("Failed to delete image object {}. It will be retried.", task.getObjectKey(), e);
+            }
+        }
+    }
+
+    private void enqueueDeletion(String objectKey) {
+        if (objectKey == null || objectKey.isBlank()) return;
+        imageDeletionTaskRepository.findByObjectKey(objectKey)
+            .orElseGet(() -> imageDeletionTaskRepository.save(ImageDeletionTask.create(objectKey)));
     }
 
     private ImageUpload findOwnedForUpdate(String email, UUID uploadId) {

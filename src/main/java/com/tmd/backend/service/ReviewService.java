@@ -36,6 +36,7 @@ import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -119,10 +120,17 @@ public class ReviewService {
     public void deleteReview(String email, Long reviewId) {
         Review review = reviewRepository.findByIdAndUserEmail(reviewId, email)
             .orElseThrow(() -> new BaseException(ErrorCode.REVIEW_NOT_FOUND));
-        Long placeId = review.getPlace().getId();
-        imageService.markForDeletion(review.getImageKey());
-        reviewRepository.delete(review);
-        evictPlaceCache(placeId);
+        deleteReviews(List.of(review));
+    }
+
+    @Transactional
+    public void deleteReviewsByPetId(Long petId) {
+        deleteReviews(reviewRepository.findAllByPetId(petId));
+    }
+
+    @Transactional
+    public void deleteReviewsByUserId(Long userId) {
+        deleteReviews(reviewRepository.findAllByUserId(userId));
     }
 
     // 장소의 전체 리뷰(페이지네이션)
@@ -284,6 +292,18 @@ public class ReviewService {
         Cache stats = cacheManager.getCache("visitStats");
         if (avg != null) avg.evict(placeId);
         if (stats != null) stats.evict(placeId);
+    }
+
+    private void deleteReviews(List<Review> reviews) {
+        if (reviews.isEmpty()) return;
+
+        Set<Long> placeIds = reviews.stream()
+            .map(review -> review.getPlace().getId())
+            .collect(Collectors.toSet());
+        reviews.forEach(review -> imageService.markForDeletion(review.getImageKey()));
+        reviewRepository.deleteAll(reviews);
+        reviewRepository.flush();
+        placeIds.forEach(this::evictPlaceCache);
     }
 
     private void validateMismatchReasons(FeedbackType feedbackType, List<MismatchReason> reasons) {

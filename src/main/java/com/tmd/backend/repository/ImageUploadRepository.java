@@ -23,6 +23,8 @@ public interface ImageUploadRepository extends JpaRepository<ImageUpload, UUID> 
 
     Optional<ImageUpload> findByFinalKey(String finalKey);
 
+    List<ImageUpload> findAllByUserId(Long userId);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
         SELECT i FROM ImageUpload i

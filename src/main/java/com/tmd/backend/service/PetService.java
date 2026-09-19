@@ -24,6 +24,7 @@ public class PetService {
     private final UserRepository userRepository;
     private final PetRepository petRepository;
     private final ImageService imageService;
+    private final ReviewService reviewService;
 
     public List<PetResponse> getPets(String email) {
         User user = findUser(email);
@@ -72,6 +73,7 @@ public class PetService {
     public void deletePet(String email, Long petId) {
         Pet pet = petRepository.findByIdAndUserEmail(petId, email)
             .orElseThrow(() -> new BaseException(ErrorCode.PET_NOT_FOUND));
+        reviewService.deleteReviewsByPetId(petId);
         imageService.markForDeletion(pet.getImageKey());
         petRepository.delete(pet);
     }
