@@ -19,6 +19,7 @@ import java.util.Optional;
 public class TourApiClient {
     private static final String BASE_URL = "https://apis.data.go.kr/B551011/KorPetTourService2";
     private static final int NUM_OF_ROWS = 11000;
+    private static final int CATEGORY_PAGE_SIZE = 1000;
 
     @Value("${tourapi.service-key}")
     private String serviceKey;
@@ -110,6 +111,91 @@ public class TourApiClient {
             );
         }
         return List.copyOf(result);
+    }
+
+    public List<TourApiCategoryEntry> getTourCategoryCodes() {
+        List<TourApiCategoryEntry> result = new java.util.ArrayList<>();
+        List<TourApiCategoryItem> level1Items = getCategoryItems(null, null);
+        addCategoryEntries(result, level1Items, 1, null);
+
+        for (TourApiCategoryItem level1 : level1Items) {
+            List<TourApiCategoryItem> level2Items = getCategoryItems(level1.getCode(), null);
+            addCategoryEntries(result, level2Items, 2, level1.getCode());
+            for (TourApiCategoryItem level2 : level2Items) {
+                List<TourApiCategoryItem> level3Items = getCategoryItems(level1.getCode(), level2.getCode());
+                addCategoryEntries(result, level3Items, 3, level2.getCode());
+            }
+        }
+        return List.copyOf(result);
+    }
+
+    private void addCategoryEntries(List<TourApiCategoryEntry> target,
+                                    List<TourApiCategoryItem> items,
+                                    int depth,
+                                    String parentCode) {
+        for (int index = 0; index < items.size(); index++) {
+            TourApiCategoryItem item = items.get(index);
+            int displayOrder = item.getRnum() == null ? index + 1 : item.getRnum();
+            target.add(new TourApiCategoryEntry(
+                item.getCode(), item.getName(), depth, parentCode, displayOrder
+            ));
+        }
+    }
+
+    private List<TourApiCategoryItem> getCategoryItems(String level1Code, String level2Code) {
+        TourApiResponse.ResponseBody<TourApiCategoryItem> firstPage = getCategoryPage(1, level1Code, level2Code);
+        int totalCount = firstPage.getTotalCount() == null ? 0 : firstPage.getTotalCount();
+        List<TourApiCategoryItem> result = new java.util.ArrayList<>(firstPage.itemList());
+        for (int page = 2; result.size() < totalCount; page++) {
+            List<TourApiCategoryItem> items = getCategoryPage(page, level1Code, level2Code).itemList();
+            if (items.isEmpty()) {
+                throw new IllegalStateException("TourAPI category response ended before totalCount");
+            }
+            result.addAll(items);
+        }
+        if (result.size() != totalCount) {
+            throw new IllegalStateException(
+                "TourAPI category response count mismatch. totalCount=" + totalCount + ", actual=" + result.size()
+            );
+        }
+        return List.copyOf(result);
+    }
+
+    private TourApiResponse.ResponseBody<TourApiCategoryItem> getCategoryPage(
+        int pageNo,
+        String level1Code,
+        String level2Code
+    ) {
+        URI uri = UriComponentsBuilder
+            .fromUriString(BASE_URL)
+            .path("/lclsSystmCode2")
+            .queryParam("serviceKey", serviceKey)
+            .queryParam("numOfRows", CATEGORY_PAGE_SIZE)
+            .queryParam("pageNo", pageNo)
+            .queryParamIfPresent("lclsSystm1", Optional.ofNullable(level1Code))
+            .queryParamIfPresent("lclsSystm2", Optional.ofNullable(level2Code))
+            .queryParam("MobileOS", "ETC")
+            .queryParam("MobileApp", "TellMeDog")
+            .queryParam("_type", "json")
+            .build()
+            .toUri();
+
+        TourApiResponse<TourApiCategoryItem> response = restClient.get()
+            .uri(uri)
+            .retrieve()
+            .body(new ParameterizedTypeReference<TourApiResponse<TourApiCategoryItem>>() {
+            });
+        if (response == null || response.getHeader() == null
+            || !"0000".equals(response.getHeader().getResultCode())) {
+            String message = response == null || response.getHeader() == null
+                ? "missing response header"
+                : response.getHeader().getResultCode() + ": " + response.getHeader().getResultMsg();
+            throw new IllegalStateException("TourAPI category request failed: " + message);
+        }
+        if (response.getBody() == null) {
+            throw new IllegalStateException("TourAPI category response body is missing. pageNo=" + pageNo);
+        }
+        return response.getBody();
     }
 
     private TourApiResponse.ResponseBody<TourApiPlaceItem> getTourSyncPage(int pageNo) {

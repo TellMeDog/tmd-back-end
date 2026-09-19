@@ -14,7 +14,15 @@ public class TourApiResponse<T> {
     @Getter
     @NoArgsConstructor
     public static class Body<T>{
+        private Header header;
         private ResponseBody<T> body;
+    }
+
+    @Getter
+    @NoArgsConstructor
+    public static class Header {
+        private String resultCode;
+        private String resultMsg;
     }
 
     @Getter
@@ -37,5 +45,9 @@ public class TourApiResponse<T> {
 
     public ResponseBody<T> getBody(){
         return response == null ? null : response.getBody();
+    }
+
+    public Header getHeader() {
+        return response == null ? null : response.getHeader();
     }
 }
