@@ -5,9 +5,9 @@ import com.tmd.backend.service.review.ReviewService;
 
 import com.tmd.backend.common.ErrorCode;
 import com.tmd.backend.common.MarkerColor;
+import com.tmd.backend.common.PlaceSearchCategory;
 import com.tmd.backend.domain.pet.Pet;
 import com.tmd.backend.domain.place.Place;
-import com.tmd.backend.domain.place.TourCategory;
 import com.tmd.backend.dto.response.PageResponse;
 import com.tmd.backend.dto.response.place.PlaceMapMarkerResponse;
 import com.tmd.backend.dto.response.place.PlaceMapSearchResponse;
@@ -47,22 +47,20 @@ class PlaceCategorySearchTest {
     @InjectMocks PlaceService placeService;
 
     @Test
-    void searchesByOfficialCategoryCodeAndReturnsLightweightMarkers() {
-        TourCategory category = mock(TourCategory.class);
+    void searchesByKoreanCategoryAndReturnsLightweightMarkers() {
         Pet pet = mock(Pet.class);
         Place farPlace = place(2L, 127.10, 37.10);
         Place nearPlace = place(1L, 127.01, 37.01);
-        given(category.getDepth()).willReturn(2);
-        given(category.getCode()).willReturn("FD05");
-        given(placeCategoryService.getActiveCategory("FD05")).willReturn(category);
+        given(placeCategoryService.getSearchCategory("숙박"))
+            .willReturn(PlaceSearchCategory.ACCOMMODATION);
         given(petRepository.findByIdAndUserEmail(1L, "test@email.com")).willReturn(Optional.of(pet));
         given(placeRepository.findPlacesWithCategory(
-            37.0, 127.0, 38.0, 128.0, 2, "FD05"
+            37.0, 127.0, 38.0, 128.0, 1, "AC"
         )).willReturn(List.of(farPlace, nearPlace));
         given(markerColorService.calculateMarkerColorForPlace(any(Place.class), eq(pet))).willReturn(MarkerColor.GREY);
 
         PlaceMapSearchResponse result = placeService.searchByCategory(
-            "FD05", "test@email.com", 1L,
+            "숙박", "test@email.com", 1L,
             37.0, 127.0, 38.0, 128.0
         );
 
@@ -94,18 +92,16 @@ class PlaceCategorySearchTest {
 
     @Test
     void guestCategorySearchReturnsGreyMarkers() {
-        TourCategory category = mock(TourCategory.class);
         Place place = place(1L, 127.01, 37.01);
-        given(category.getDepth()).willReturn(1);
-        given(category.getCode()).willReturn("FD");
-        given(placeCategoryService.getActiveCategory("FD")).willReturn(category);
+        given(placeCategoryService.getSearchCategory("식당/카페"))
+            .willReturn(PlaceSearchCategory.FOOD);
         given(placeRepository.findPlacesWithCategory(
             37.0, 127.0, 38.0, 128.0, 1, "FD"
         )).willReturn(List.of(place));
         given(markerColorService.calculateMarkerColorForPlace(any(Place.class), isNull())).willReturn(MarkerColor.GREY);
 
         PlaceMapSearchResponse result = placeService.searchByCategory(
-            "FD", null, null,
+            "식당/카페", null, null,
             37.0, 127.0, 38.0, 128.0
         );
 
@@ -118,14 +114,12 @@ class PlaceCategorySearchTest {
 
     @Test
     void categoryListReturnsRequestedPageWithBatchRatingsAndFavorites() {
-        TourCategory category = mock(TourCategory.class);
         Place first = place(1L, 127.01, 37.01);
         Place second = place(2L, 127.02, 37.02);
-        given(category.getDepth()).willReturn(2);
-        given(category.getCode()).willReturn("FD05");
-        given(placeCategoryService.getActiveCategory("FD05")).willReturn(category);
+        given(placeCategoryService.getSearchCategory("공연"))
+            .willReturn(PlaceSearchCategory.PERFORMANCE);
         given(placeRepository.findPlacePageWithCategory(
-            37.0, 127.0, 38.0, 128.0, 2, "FD05", 127.0, 37.0, PageRequest.of(0, 2)
+            37.0, 127.0, 38.0, 128.0, 2, "EV02", 127.0, 37.0, PageRequest.of(0, 2)
         )).willReturn(new PageImpl<>(List.of(first, second), PageRequest.of(0, 2), 1_000));
         given(reviewService.getAverageRatings(List.of(1L, 2L))).willReturn(Map.of(1L, 4.5));
         given(favoriteService.getFavoritePlaceIds("test@email.com", List.of(1L, 2L)))
@@ -133,7 +127,7 @@ class PlaceCategorySearchTest {
         given(markerColorService.calculateMarkerColorForPlace(any(Place.class), isNull())).willReturn(MarkerColor.GREY);
 
         PageResponse<PlaceMarkerResponse> result = placeService.searchCategoryList(
-            "FD05", "test@email.com", null,
+            "공연", "test@email.com", null,
             37.0, 127.0, 38.0, 128.0,
             127.0, 37.0, 0, 2
         );
@@ -166,7 +160,7 @@ class PlaceCategorySearchTest {
     @Test
     void rejectsInvalidBoundsBeforeCategoryLookup() {
         assertThatThrownBy(() -> placeService.searchByCategory(
-            "FD", null, null,
+            "숙박", null, null,
             38.0, 127.0, 37.0, 128.0
         ))
             .isInstanceOf(BaseException.class)
@@ -178,7 +172,7 @@ class PlaceCategorySearchTest {
 
     @Test
     void rejectsUnknownCategory() {
-        given(placeCategoryService.getActiveCategory("UNKNOWN"))
+        given(placeCategoryService.getSearchCategory("UNKNOWN"))
             .willThrow(new BaseException(ErrorCode.INVALID_CATEGORY));
 
         assertThatThrownBy(() -> placeService.searchByCategory(
@@ -193,11 +187,54 @@ class PlaceCategorySearchTest {
     }
 
     @Test
+    void searchesFestivalByKoreanCategoryName() {
+        Place place = place(1L, 127.01, 37.01);
+        given(placeCategoryService.getSearchCategory("축제"))
+            .willReturn(PlaceSearchCategory.FESTIVAL);
+        given(placeRepository.findPlacesWithCategory(
+            37.0, 127.0, 38.0, 128.0, 2, "EV01"
+        )).willReturn(List.of(place));
+        given(markerColorService.calculateMarkerColorForPlace(any(Place.class), isNull()))
+            .willReturn(MarkerColor.GREY);
+
+        PlaceMapSearchResponse result = placeService.searchByCategory(
+            "축제", null, null,
+            37.0, 127.0, 38.0, 128.0
+        );
+
+        assertThat(result.totalCount()).isEqualTo(1);
+        verify(placeRepository).findPlacesWithCategory(
+            37.0, 127.0, 38.0, 128.0, 2, "EV01"
+        );
+    }
+
+    @Test
+    void koreanAllCategoryReturnsEveryPlaceWithinBounds() {
+        Place place = place(1L, 127.01, 37.01);
+        given(placeCategoryService.getSearchCategory("전체"))
+            .willReturn(PlaceSearchCategory.ALL);
+        given(placeRepository.findPlacesWithinBounds(37.0, 127.0, 38.0, 128.0))
+            .willReturn(List.of(place));
+        given(markerColorService.calculateMarkerColorForPlace(any(Place.class), isNull()))
+            .willReturn(MarkerColor.GREY);
+
+        PlaceMapSearchResponse result = placeService.searchByCategory(
+            "전체", null, null,
+            37.0, 127.0, 38.0, 128.0
+        );
+
+        assertThat(result.totalCount()).isEqualTo(1);
+        verify(placeRepository, never()).findPlacesWithCategory(
+            anyDouble(), anyDouble(), anyDouble(), anyDouble(), anyInt(), anyString()
+        );
+    }
+
+    @Test
     void rejectsPetOwnedByAnotherUserBeforeCategoryLookup() {
         given(petRepository.findByIdAndUserEmail(99L, "test@email.com")).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> placeService.searchByCategory(
-            "FD", "test@email.com", 99L,
+            "숙박", "test@email.com", 99L,
             37.0, 127.0, 38.0, 128.0
         ))
             .isInstanceOf(BaseException.class)

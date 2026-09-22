@@ -3,8 +3,8 @@ package com.tmd.backend.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tmd.backend.dto.response.place.PlaceMapMarkerResponse;
-import com.tmd.backend.dto.response.place.PlaceMapSearchResponse;
 import com.tmd.backend.service.place.PlaceService;
+import com.tmd.backend.dto.response.place.PlaceMapSearchResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -12,8 +12,8 @@ import org.springframework.security.core.authority.AuthorityUtils;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class PlaceControllerTest {
     private final PlaceService placeService = mock(PlaceService.class);
@@ -79,5 +79,23 @@ class PlaceControllerTest {
         assertThat(json.at("/data/totalCount").asLong()).isEqualTo(1);
         assertThat(json.at("/data/markers").size()).isEqualTo(1);
         assertThat(json.at("/data/markers/0/placeId").asLong()).isEqualTo(1);
+    }
+
+    @Test
+    void 한글_카테고리를_서비스에_전달한다() {
+        when(placeService.searchByCategory(
+            "축제", null, null,
+            37.0, 127.0, 38.0, 128.0
+        )).thenReturn(PlaceMapSearchResponse.from(List.of()));
+
+        controller.getPlacesWithCategory(
+            37.0, 127.0, 38.0, 128.0,
+            "축제", null, null
+        );
+
+        verify(placeService).searchByCategory(
+            "축제", null, null,
+            37.0, 127.0, 38.0, 128.0
+        );
     }
 }

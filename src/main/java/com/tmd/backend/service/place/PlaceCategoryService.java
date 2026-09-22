@@ -1,8 +1,10 @@
 package com.tmd.backend.service.place;
 
 import com.tmd.backend.common.ErrorCode;
+import com.tmd.backend.common.PlaceSearchCategory;
 import com.tmd.backend.domain.place.TourCategory;
 import com.tmd.backend.dto.response.place.PlaceCategoryResponse;
+import com.tmd.backend.dto.response.place.PlaceSearchCategoryResponse;
 import com.tmd.backend.exception.BaseException;
 import com.tmd.backend.repository.place.PlaceRepository;
 import com.tmd.backend.repository.place.TourCategoryRepository;
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -25,12 +28,18 @@ public class PlaceCategoryService {
     private final TourCategoryRepository categoryRepository;
     private final PlaceRepository placeRepository;
 
-    public TourCategory getActiveCategory(String code) {
-        if (!StringUtils.hasText(code)) {
+    public PlaceSearchCategory getSearchCategory(String displayName) {
+        try {
+            return PlaceSearchCategory.fromDisplayName(displayName);
+        } catch (IllegalArgumentException exception) {
             throw new BaseException(ErrorCode.INVALID_CATEGORY);
         }
-        return categoryRepository.findByCodeAndActiveTrue(code.trim())
-            .orElseThrow(() -> new BaseException(ErrorCode.INVALID_CATEGORY));
+    }
+
+    public List<PlaceSearchCategoryResponse> getSearchCategories() {
+        return Arrays.stream(PlaceSearchCategory.values())
+            .map(category -> new PlaceSearchCategoryResponse(category.getDisplayName()))
+            .toList();
     }
 
     @Cacheable(value = "placeCategories", key = "'tree'")

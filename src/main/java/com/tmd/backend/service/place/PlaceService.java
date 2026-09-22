@@ -5,18 +5,19 @@ import com.tmd.backend.service.review.ReviewService;
 
 import com.tmd.backend.common.ErrorCode;
 import com.tmd.backend.common.MarkerColor;
+import com.tmd.backend.common.PlaceSearchCategory;
 import com.tmd.backend.common.Region;
 import com.tmd.backend.common.RegionDetail;
 import com.tmd.backend.domain.pet.Pet;
 import com.tmd.backend.domain.place.Place;
 import com.tmd.backend.domain.place.PlacePetInfo;
-import com.tmd.backend.domain.place.TourCategory;
 import com.tmd.backend.dto.response.PageResponse;
 import com.tmd.backend.dto.response.place.PlaceCategoryResponse;
 import com.tmd.backend.dto.response.place.PlaceDetailResponse;
 import com.tmd.backend.dto.response.place.PlaceMapMarkerResponse;
 import com.tmd.backend.dto.response.place.PlaceMapSearchResponse;
 import com.tmd.backend.dto.response.place.PlaceMarkerResponse;
+import com.tmd.backend.dto.response.place.PlaceSearchCategoryResponse;
 import com.tmd.backend.exception.BaseException;
 import com.tmd.backend.repository.pet.PetRepository;
 import com.tmd.backend.repository.place.PlaceRepository;
@@ -52,7 +53,7 @@ public class PlaceService {
     // 프론트엔드가 현재 화면보다 넓게 계산한 bbox를 전달한다.
     // 백엔드는 전달받은 bbox를 그대로 조회하며 화면 이동에 따른 재검색 여부는 프론트엔드가 판단한다.
     public PlaceMapSearchResponse searchByCategory(
-        String categoryCode,
+        String category,
         String email,
         Long petId,
         double swLat,
@@ -62,17 +63,17 @@ public class PlaceService {
     ) {
         validateMapBounds(swLat, swLng, neLat, neLng);
         Pet pet = findPetIfProvided(petId, email);
-        TourCategory category = findCategoryIfProvided(categoryCode);
+        CategoryFilter categoryFilter = resolveCategoryFilter(category);
 
-        List<Place> places = category == null
+        List<Place> places = categoryFilter == null
             ? placeRepository.findPlacesWithinBounds(swLat, swLng, neLat, neLng)
             : placeRepository.findPlacesWithCategory(
                 swLat,
                 swLng,
                 neLat,
                 neLng,
-                category.getDepth(),
-                category.getCode()
+                categoryFilter.depth(),
+                categoryFilter.code()
             );
 
         List<PlaceMapMarkerResponse> markers = toMapMarkerResponses(places, pet).stream()
@@ -82,7 +83,7 @@ public class PlaceService {
     }
 
     public PageResponse<PlaceMarkerResponse> searchCategoryList(
-        String categoryCode,
+        String category,
         String email,
         Long petId,
         double swLat,
@@ -98,14 +99,14 @@ public class PlaceService {
         validateCoordinates(currMapY, currMapX);
         validatePageRequest(page, size);
         Pet pet = findPetIfProvided(petId, email);
-        TourCategory category = findCategoryIfProvided(categoryCode);
+        CategoryFilter categoryFilter = resolveCategoryFilter(category);
         PageRequest pageable = PageRequest.of(page, size);
-        Page<Place> places = category == null
+        Page<Place> places = categoryFilter == null
             ? placeRepository.findPlacePageWithinBounds(
                 swLat, swLng, neLat, neLng, currMapX, currMapY, pageable
             )
             : placeRepository.findPlacePageWithCategory(
-                swLat, swLng, neLat, neLng, category.getDepth(), category.getCode(),
+                swLat, swLng, neLat, neLng, categoryFilter.depth(), categoryFilter.code(),
                 currMapX, currMapY, pageable
             );
         return toPlacePageResponse(places, email, pet, currMapX, currMapY);
@@ -113,6 +114,10 @@ public class PlaceService {
 
     public List<PlaceCategoryResponse> getCategories() {
         return placeCategoryService.getCategories();
+    }
+
+    public List<PlaceSearchCategoryResponse> getSearchCategories() {
+        return placeCategoryService.getSearchCategories();
     }
 
     // 검색창에 검색 로직
@@ -336,10 +341,13 @@ public class PlaceService {
         return place.isAnimalHospital() ? "ANIMAL_HOSPITAL" : "TOUR";
     }
 
-    private TourCategory findCategoryIfProvided(String categoryCode) {
-        return StringUtils.hasText(categoryCode)
-            ? placeCategoryService.getActiveCategory(categoryCode)
-            : null;
+    private CategoryFilter resolveCategoryFilter(String category) {
+        if (!StringUtils.hasText(category)) return null;
+
+        PlaceSearchCategory searchCategory = placeCategoryService.getSearchCategory(category);
+        return searchCategory.isAll()
+            ? null
+            : new CategoryFilter(searchCategory.getDepth(), searchCategory.getQueryCode());
     }
 
     private String validateKeyword(String keyword) {
@@ -420,4 +428,6 @@ public class PlaceService {
     }
 
     private record MapBounds(double swLat, double swLng, double neLat, double neLng) {}
+
+    private record CategoryFilter(int depth, String code) {}
 }

@@ -6,6 +6,7 @@ import com.tmd.backend.dto.response.place.PlaceCategoryResponse;
 import com.tmd.backend.dto.response.place.PlaceDetailResponse;
 import com.tmd.backend.dto.response.place.PlaceMapSearchResponse;
 import com.tmd.backend.dto.response.place.PlaceMarkerResponse;
+import com.tmd.backend.dto.response.place.PlaceSearchCategoryResponse;
 import com.tmd.backend.service.place.PlaceService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -48,26 +49,26 @@ public class PlaceController {
 
     @Operation(
         summary = "카테고리별 장소 검색",
-        description = "사용자가 보고 있는 지도 영역 내에서 선택한 Tour API 카테고리 코드에 해당하는 장소를 조회합니다." )
+        description = "사용자가 보고 있는 지도 영역 내에서 선택한 한글 카테고리에 해당하는 장소를 조회합니다." )
     @GetMapping("/search/category")
     public ResponseEntity<SuccessResponseDto<PlaceMapSearchResponse>> getPlacesWithCategory(
         @Parameter(description = "지도 영역의 남서쪽 위도", example = "37.1234") @RequestParam double swLat,
         @Parameter(description = "지도 영역의 남서쪽 경도", example = "127.1234") @RequestParam double swLng,
         @Parameter(description = "지도 영역의 북동쪽 위도", example = "38.1234") @RequestParam double neLat,
         @Parameter(description = "지도 영역의 북동쪽 경도", example = "128.1234") @RequestParam double neLng,
-        @Parameter(description = "검색할 Tour API 카테고리 코드. 생략하면 전체 장소를 조회합니다.", example = "FD05")
-        @RequestParam(required = false) String categoryCode,
+        @Parameter(description = "검색할 한글 카테고리. 생략하거나 '전체'이면 전체 장소를 조회합니다.", example = "식당/카페")
+        @RequestParam(required = false) String category,
         @Parameter(description = "조회할 반려동물 ID (없으면 회색 마커)", example = "1")
         @RequestParam(required = false) Long petId,
         Authentication authentication) {
 
         String email = authenticatedEmail(authentication);
 
-        log.info("장소 목록 조회: bounds=({},{})~({},{}), petId={}, categoryCode={}",
-            swLat, swLng, neLat, neLng, petId, categoryCode);
+        log.info("장소 목록 조회: bounds=({},{})~({},{}), petId={}, category={}",
+            swLat, swLng, neLat, neLng, petId, category);
 
         PlaceMapSearchResponse response = placeService.searchByCategory(
-            categoryCode,
+            category,
             email,
             petId,
             swLat,
@@ -88,7 +89,7 @@ public class PlaceController {
         @RequestParam double neLng,
         @RequestParam double currMapX,
         @RequestParam double currMapY,
-        @RequestParam(required = false) String categoryCode,
+        @RequestParam(required = false) String category,
         @RequestParam(required = false) Long petId,
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "20") int size,
@@ -96,7 +97,7 @@ public class PlaceController {
     ) {
         String email = authenticatedEmail(authentication);
         PageResponse<PlaceMarkerResponse> response = placeService.searchCategoryList(
-            categoryCode, email, petId, swLat, swLng, neLat, neLng,
+            category, email, petId, swLat, swLng, neLat, neLng,
             currMapX, currMapY, page, size
         );
         return ResponseEntity.ok(SuccessResponseDto.success("카테고리 장소 목록을 조회했습니다.", response));
@@ -104,12 +105,22 @@ public class PlaceController {
 
     @Operation(
         summary = "장소 카테고리 목록 조회",
-        description = "활성 장소가 사용하는 Tour API 대·중·소분류를 계층형으로 조회합니다."
+        description = "활성 장소가 사용하는 카테고리를 계층형으로 조회합니다. Tour API 분류와 동물병원 카테고리를 포함합니다."
     )
     @GetMapping("/categories")
     public ResponseEntity<SuccessResponseDto<List<PlaceCategoryResponse>>> getCategories() {
         List<PlaceCategoryResponse> response = placeService.getCategories();
         return ResponseEntity.ok(SuccessResponseDto.success("장소 카테고리 목록을 조회했습니다.", response));
+    }
+
+    @Operation(
+        summary = "검색용 카테고리 목록 조회",
+        description = "장소 검색 API의 category 파라미터로 전달할 한글 카테고리 목록을 조회합니다."
+    )
+    @GetMapping("/search-categories")
+    public ResponseEntity<SuccessResponseDto<List<PlaceSearchCategoryResponse>>> getSearchCategories() {
+        List<PlaceSearchCategoryResponse> response = placeService.getSearchCategories();
+        return ResponseEntity.ok(SuccessResponseDto.success("검색용 카테고리 목록을 조회했습니다.", response));
     }
 
     @Operation(

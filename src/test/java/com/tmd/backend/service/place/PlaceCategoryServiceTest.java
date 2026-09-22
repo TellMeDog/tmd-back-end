@@ -1,6 +1,7 @@
 package com.tmd.backend.service.place;
 
 import com.tmd.backend.common.ErrorCode;
+import com.tmd.backend.common.PlaceSearchCategory;
 import com.tmd.backend.domain.place.TourCategory;
 import com.tmd.backend.exception.BaseException;
 import com.tmd.backend.repository.place.PlaceRepository;
@@ -9,7 +10,6 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -46,10 +46,42 @@ class PlaceCategoryServiceTest {
     }
 
     @Test
-    void rejectsInactiveOrUnknownCategory() {
-        when(categoryRepository.findByCodeAndActiveTrue("UNKNOWN")).thenReturn(Optional.empty());
+    void resolvesKoreanSearchCategoryAfterTrimming() {
+        PlaceSearchCategory result = service.getSearchCategory("  축제  ");
 
-        assertThatThrownBy(() -> service.getActiveCategory("UNKNOWN"))
+        assertThat(result).isEqualTo(PlaceSearchCategory.FESTIVAL);
+        assertThat(result.getDepth()).isEqualTo(2);
+        assertThat(result.getQueryCode()).isEqualTo("EV01");
+    }
+
+    @Test
+    void returnsSearchCategoryMenuInDisplayOrder() {
+        assertThat(service.getSearchCategories())
+            .extracting(response -> response.category())
+            .containsExactly(
+                "전체", "숙박", "축제", "공연", "행사", "체험관광", "식당/카페",
+                "역사관광", "레저스포츠", "자연관광", "쇼핑", "문화관광", "동물병원"
+            );
+    }
+
+    @Test
+    void mapsEverySearchCategoryToExpectedDepthAndCode() {
+        assertThat(PlaceSearchCategory.values())
+            .extracting(category -> String.join(":",
+                category.getDisplayName(),
+                String.valueOf(category.getDepth()),
+                String.valueOf(category.getQueryCode())
+            ))
+            .containsExactly(
+                "전체:0:null", "숙박:1:AC", "축제:2:EV01", "공연:2:EV02", "행사:2:EV03",
+                "체험관광:1:EX", "식당/카페:1:FD", "역사관광:1:HS", "레저스포츠:1:LS",
+                "자연관광:1:NA", "쇼핑:1:SH", "문화관광:1:VE", "동물병원:1:TMDHOSP"
+            );
+    }
+
+    @Test
+    void rejectsUnknownKoreanSearchCategory() {
+        assertThatThrownBy(() -> service.getSearchCategory("여행"))
             .isInstanceOf(BaseException.class)
             .satisfies(error -> assertThat(((BaseException) error).getErrorCode())
                 .isEqualTo(ErrorCode.INVALID_CATEGORY));
