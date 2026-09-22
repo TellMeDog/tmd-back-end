@@ -41,7 +41,7 @@ public class PetController {
     )
     @PostMapping
     public ResponseEntity<SuccessResponseDto<List<PetResponse>>> registerPets(
-        @Valid @RequestBody List<PetRegisterRequest> requests,
+        @RequestBody List<@Valid PetRegisterRequest> requests,
         @AuthenticationPrincipal String email
     ) {
         return ResponseEntity.ok(SuccessResponseDto.success(
