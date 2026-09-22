@@ -6,7 +6,7 @@
 
 - 카테고리와 키워드 지도 검색은 전체 마커와 `totalCount`를 반환합니다.
 - 바텀시트 목록은 별도 `/list` API에서 페이지 단위로 반환합니다.
-- 프론트엔드는 카테고리 코드를 변환하지 않고 `전체`, `숙박`, `식당/카페` 같은 한글 값을 전달합니다.
+- 프론트엔드는 카테고리 코드를 변환하지 않고 `전체`, `숙박`, `식당카페` 같은 한글 값을 전달합니다.
 - Tour API 장소와 동물병원이 같은 검색 결과에 포함되며 `placeType`으로 구분합니다.
 - 비회원과 반려동물을 선택하지 않은 회원도 검색할 수 있으며 마커 색상은 `GREY`입니다.
 
@@ -60,7 +60,7 @@ GET /places/search-categories
 | `공연` | `EV02` |
 | `행사` | `EV03` |
 | `체험관광` | `EX` |
-| `식당/카페` | `FD` |
+| `식당카페` | `FD` |
 | `역사관광` | `HS` |
 | `레저스포츠` | `LS` |
 | `자연관광` | `NA` |
@@ -120,7 +120,7 @@ GET /places/search/category
 | `petId` | X | 반려동물 ID |
 
 ```http
-GET /places/search/category?swLat=37.45&swLng=126.95&neLat=37.55&neLng=127.10&category=식당%2F카페&petId=1
+GET /places/search/category?swLat=37.45&swLng=126.95&neLat=37.55&neLng=127.10&category=식당카페&petId=1
 ```
 
 전체 검색은 `category=전체`를 보내거나 파라미터를 생략합니다.
@@ -142,7 +142,7 @@ GET /places/search/category/list
 | `size` | X | `20` | 페이지 크기, 최대 100 |
 
 ```http
-GET /places/search/category/list?swLat=37.45&swLng=126.95&neLat=37.55&neLng=127.10&currMapX=127.0276&currMapY=37.4979&category=식당%2F카페&page=0&size=20
+GET /places/search/category/list?swLat=37.45&swLng=126.95&neLat=37.55&neLng=127.10&currMapX=127.0276&currMapY=37.4979&category=식당카페&page=0&size=20
 ```
 
 응답의 `data`는 다음 구조입니다.
@@ -202,7 +202,7 @@ GET /places/search/keyword/list?keyword=용산공원&petId=1&currMapX=126.9832&c
 ## 9. 프론트엔드 체크리스트
 
 - [ ] `categoryCode` 대신 한글 `category` 사용
-- [ ] `식당/카페`의 `/`를 URL 인코딩해 전송
+- [ ] `식당카페` 값을 그대로 전송
 - [ ] 지도 응답의 `data.totalCount`, `data.markers` 사용
 - [ ] 지도 응답에서 목록 전용 필드를 참조하지 않도록 변경
 - [ ] 바텀시트 목록을 `/list` API와 페이지네이션으로 변경

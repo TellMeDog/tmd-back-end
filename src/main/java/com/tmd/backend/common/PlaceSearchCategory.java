@@ -9,7 +9,7 @@ public enum PlaceSearchCategory {
     PERFORMANCE("공연", "EV", "EV02", null),
     EVENT("행사", "EV", "EV03", null),
     EXPERIENCE("체험관광", "EX", null, null),
-    FOOD("식당/카페", "FD", null, null),
+    FOOD("식당카페", "FD", null, null),
     HISTORY("역사관광", "HS", null, null),
     LEISURE_SPORTS("레저스포츠", "LS", null, null),
     NATURE("자연관광", "NA", null, null),

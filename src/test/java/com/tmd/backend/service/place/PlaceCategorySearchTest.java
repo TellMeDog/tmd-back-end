@@ -93,7 +93,7 @@ class PlaceCategorySearchTest {
     @Test
     void guestCategorySearchReturnsGreyMarkers() {
         Place place = place(1L, 127.01, 37.01);
-        given(placeCategoryService.getSearchCategory("식당/카페"))
+        given(placeCategoryService.getSearchCategory("식당카페"))
             .willReturn(PlaceSearchCategory.FOOD);
         given(placeRepository.findPlacesWithCategory(
             37.0, 127.0, 38.0, 128.0, 1, "FD"
@@ -101,7 +101,7 @@ class PlaceCategorySearchTest {
         given(markerColorService.calculateMarkerColorForPlace(any(Place.class), isNull())).willReturn(MarkerColor.GREY);
 
         PlaceMapSearchResponse result = placeService.searchByCategory(
-            "식당/카페", null, null,
+            "식당카페", null, null,
             37.0, 127.0, 38.0, 128.0
         );
 

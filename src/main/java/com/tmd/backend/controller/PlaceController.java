@@ -56,7 +56,7 @@ public class PlaceController {
         @Parameter(description = "지도 영역의 남서쪽 경도", example = "127.1234") @RequestParam double swLng,
         @Parameter(description = "지도 영역의 북동쪽 위도", example = "38.1234") @RequestParam double neLat,
         @Parameter(description = "지도 영역의 북동쪽 경도", example = "128.1234") @RequestParam double neLng,
-        @Parameter(description = "검색할 한글 카테고리. 생략하거나 '전체'이면 전체 장소를 조회합니다.", example = "식당/카페")
+        @Parameter(description = "검색할 한글 카테고리. 생략하거나 '전체'이면 전체 장소를 조회합니다.", example = "식당카페")
         @RequestParam(required = false) String category,
         @Parameter(description = "조회할 반려동물 ID (없으면 회색 마커)", example = "1")
         @RequestParam(required = false) Long petId,
