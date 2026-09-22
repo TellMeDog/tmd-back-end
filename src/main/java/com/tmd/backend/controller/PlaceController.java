@@ -4,7 +4,7 @@ import com.tmd.backend.dto.response.SuccessResponseDto;
 import com.tmd.backend.dto.response.PageResponse;
 import com.tmd.backend.dto.response.place.PlaceCategoryResponse;
 import com.tmd.backend.dto.response.place.PlaceDetailResponse;
-import com.tmd.backend.dto.response.place.PlaceMapMarkerResponse;
+import com.tmd.backend.dto.response.place.PlaceMapSearchResponse;
 import com.tmd.backend.dto.response.place.PlaceMarkerResponse;
 import com.tmd.backend.service.place.PlaceService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -50,7 +50,7 @@ public class PlaceController {
         summary = "카테고리별 장소 검색",
         description = "사용자가 보고 있는 지도 영역 내에서 선택한 Tour API 카테고리 코드에 해당하는 장소를 조회합니다." )
     @GetMapping("/search/category")
-    public ResponseEntity<SuccessResponseDto<List<PlaceMapMarkerResponse>>> getPlacesWithCategory(
+    public ResponseEntity<SuccessResponseDto<PlaceMapSearchResponse>> getPlacesWithCategory(
         @Parameter(description = "지도 영역의 남서쪽 위도", example = "37.1234") @RequestParam double swLat,
         @Parameter(description = "지도 영역의 남서쪽 경도", example = "127.1234") @RequestParam double swLng,
         @Parameter(description = "지도 영역의 북동쪽 위도", example = "38.1234") @RequestParam double neLat,
@@ -66,7 +66,7 @@ public class PlaceController {
         log.info("장소 목록 조회: bounds=({},{})~({},{}), petId={}, categoryCode={}",
             swLat, swLng, neLat, neLng, petId, categoryCode);
 
-        List<PlaceMapMarkerResponse> response = placeService.searchByCategory(
+        PlaceMapSearchResponse response = placeService.searchByCategory(
             categoryCode,
             email,
             petId,
@@ -117,7 +117,7 @@ public class PlaceController {
         description = "장소명 또는 지역명을 키워드로 장소를 검색합니다."
     )
     @GetMapping("/search/keyword")
-    public ResponseEntity<SuccessResponseDto<List<PlaceMapMarkerResponse>>> searchPlaces(
+    public ResponseEntity<SuccessResponseDto<PlaceMapSearchResponse>> searchPlaces(
         @Parameter(description = "검색 키워드", example = "용산공원") @RequestParam String keyword,
         @Parameter(description = "조회할 반려동물 ID (없으면 회색 마커)", example = "1")
         @RequestParam(required = false) Long petId,
@@ -127,7 +127,7 @@ public class PlaceController {
 
         log.info("키워드 장소 마커 검색: keyword={}, petId={}, email={}", keyword, petId, email);
 
-        List<PlaceMapMarkerResponse> response = placeService.searchByKeyword(keyword, petId, email);
+        PlaceMapSearchResponse response = placeService.searchByKeyword(keyword, petId, email);
 
         return ResponseEntity.ok(SuccessResponseDto.success("키워드 장소 목록을 조회했습니다.", response));
     }

@@ -10,6 +10,7 @@ import com.tmd.backend.domain.place.Place;
 import com.tmd.backend.dto.response.PageResponse;
 import com.tmd.backend.dto.response.place.PlaceDetailResponse;
 import com.tmd.backend.dto.response.place.PlaceMapMarkerResponse;
+import com.tmd.backend.dto.response.place.PlaceMapSearchResponse;
 import com.tmd.backend.dto.response.place.PlaceMarkerResponse;
 import com.tmd.backend.exception.BaseException;
 import com.tmd.backend.repository.pet.PetRepository;
@@ -127,11 +128,22 @@ class PlaceServiceTest {
         given(placeRepository.findPlacesWithKeyword("공원")).willReturn(places);
         given(markerColorService.calculateMarkerColorForPlace(any(Place.class), isNull())).willReturn(MarkerColor.GREY);
 
-        List<PlaceMapMarkerResponse> result = placeService.searchByKeyword("공원", null, null);
+        PlaceMapSearchResponse result = placeService.searchByKeyword("공원", null, null);
 
-        assertThat(result).hasSize(1_000);
-        assertThat(result).extracting(PlaceMapMarkerResponse::placeId).isSorted();
+        assertThat(result.totalCount()).isEqualTo(1_000);
+        assertThat(result.markers()).hasSize(1_000);
+        assertThat(result.markers()).extracting(PlaceMapMarkerResponse::placeId).isSorted();
         verifyNoInteractions(reviewService, favoriteService);
+    }
+
+    @Test
+    void keywordMarkerSearchReturnsZeroCountForEmptyResult() {
+        given(placeRepository.findPlacesWithKeyword("없는장소")).willReturn(List.of());
+
+        PlaceMapSearchResponse result = placeService.searchByKeyword("없는장소", null, null);
+
+        assertThat(result.totalCount()).isZero();
+        assertThat(result.markers()).isEmpty();
     }
 
     @Test
@@ -192,9 +204,10 @@ class PlaceServiceTest {
         given(placeRepository.findPlacesWithKeyword("강남")).willReturn(List.of(place));
         given(markerColorService.calculateMarkerColorForPlace(any(Place.class), isNull())).willReturn(MarkerColor.GREY);
 
-        List<PlaceMapMarkerResponse> result = placeService.searchByKeyword("강남", null, "test@email.com");
+        PlaceMapSearchResponse result = placeService.searchByKeyword("강남", null, "test@email.com");
 
-        assertThat(result).singleElement().satisfies(marker -> {
+        assertThat(result.totalCount()).isEqualTo(1);
+        assertThat(result.markers()).singleElement().satisfies(marker -> {
             assertThat(marker.markerColor()).isEqualTo("GREY");
             assertThat(marker.placeId()).isEqualTo(1L);
         });

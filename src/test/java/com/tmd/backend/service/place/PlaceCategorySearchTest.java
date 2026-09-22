@@ -10,6 +10,7 @@ import com.tmd.backend.domain.place.Place;
 import com.tmd.backend.domain.place.TourCategory;
 import com.tmd.backend.dto.response.PageResponse;
 import com.tmd.backend.dto.response.place.PlaceMapMarkerResponse;
+import com.tmd.backend.dto.response.place.PlaceMapSearchResponse;
 import com.tmd.backend.dto.response.place.PlaceMarkerResponse;
 import com.tmd.backend.exception.BaseException;
 import com.tmd.backend.repository.pet.PetRepository;
@@ -60,12 +61,13 @@ class PlaceCategorySearchTest {
         )).willReturn(List.of(farPlace, nearPlace));
         given(markerColorService.calculateMarkerColorForPlace(any(Place.class), eq(pet))).willReturn(MarkerColor.GREY);
 
-        List<PlaceMapMarkerResponse> result = placeService.searchByCategory(
+        PlaceMapSearchResponse result = placeService.searchByCategory(
             "FD05", "test@email.com", 1L,
             37.0, 127.0, 38.0, 128.0
         );
 
-        assertThat(result).extracting(PlaceMapMarkerResponse::placeId).containsExactly(1L, 2L);
+        assertThat(result.totalCount()).isEqualTo(2);
+        assertThat(result.markers()).extracting(PlaceMapMarkerResponse::placeId).containsExactly(1L, 2L);
         verifyNoInteractions(reviewService, favoriteService);
     }
 
@@ -77,12 +79,13 @@ class PlaceCategorySearchTest {
             .willReturn(List.of(farPlace, nearPlace));
         given(markerColorService.calculateMarkerColorForPlace(any(Place.class), isNull())).willReturn(MarkerColor.GREY);
 
-        List<PlaceMapMarkerResponse> result = placeService.searchByCategory(
+        PlaceMapSearchResponse result = placeService.searchByCategory(
             null, null, null,
             37.0, 127.0, 38.0, 128.0
         );
 
-        assertThat(result).extracting(PlaceMapMarkerResponse::placeId).containsExactly(1L, 2L);
+        assertThat(result.totalCount()).isEqualTo(2);
+        assertThat(result.markers()).extracting(PlaceMapMarkerResponse::placeId).containsExactly(1L, 2L);
         verifyNoInteractions(placeCategoryService, petRepository, favoriteService);
         verify(placeRepository, never()).findPlacesWithCategory(
             anyDouble(), anyDouble(), anyDouble(), anyDouble(), anyInt(), anyString()
@@ -101,12 +104,13 @@ class PlaceCategorySearchTest {
         )).willReturn(List.of(place));
         given(markerColorService.calculateMarkerColorForPlace(any(Place.class), isNull())).willReturn(MarkerColor.GREY);
 
-        List<PlaceMapMarkerResponse> result = placeService.searchByCategory(
+        PlaceMapSearchResponse result = placeService.searchByCategory(
             "FD", null, null,
             37.0, 127.0, 38.0, 128.0
         );
 
-        assertThat(result).singleElement().satisfies(marker -> {
+        assertThat(result.totalCount()).isEqualTo(1);
+        assertThat(result.markers()).singleElement().satisfies(marker -> {
             assertThat(marker.markerColor()).isEqualTo("GREY");
         });
         verifyNoInteractions(petRepository, reviewService, favoriteService);

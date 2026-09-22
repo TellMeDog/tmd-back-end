@@ -15,6 +15,7 @@ import com.tmd.backend.dto.response.PageResponse;
 import com.tmd.backend.dto.response.place.PlaceCategoryResponse;
 import com.tmd.backend.dto.response.place.PlaceDetailResponse;
 import com.tmd.backend.dto.response.place.PlaceMapMarkerResponse;
+import com.tmd.backend.dto.response.place.PlaceMapSearchResponse;
 import com.tmd.backend.dto.response.place.PlaceMarkerResponse;
 import com.tmd.backend.exception.BaseException;
 import com.tmd.backend.repository.pet.PetRepository;
@@ -50,7 +51,7 @@ public class PlaceService {
 
     // 프론트엔드가 현재 화면보다 넓게 계산한 bbox를 전달한다.
     // 백엔드는 전달받은 bbox를 그대로 조회하며 화면 이동에 따른 재검색 여부는 프론트엔드가 판단한다.
-    public List<PlaceMapMarkerResponse> searchByCategory(
+    public PlaceMapSearchResponse searchByCategory(
         String categoryCode,
         String email,
         Long petId,
@@ -74,9 +75,10 @@ public class PlaceService {
                 category.getCode()
             );
 
-        return toMapMarkerResponses(places, pet).stream()
+        List<PlaceMapMarkerResponse> markers = toMapMarkerResponses(places, pet).stream()
             .sorted(Comparator.comparing(PlaceMapMarkerResponse::placeId))
             .toList();
+        return PlaceMapSearchResponse.from(markers);
     }
 
     public PageResponse<PlaceMarkerResponse> searchCategoryList(
@@ -114,14 +116,15 @@ public class PlaceService {
     }
 
     // 검색창에 검색 로직
-    public List<PlaceMapMarkerResponse> searchByKeyword(String keyword, Long petId, String email) {
+    public PlaceMapSearchResponse searchByKeyword(String keyword, Long petId, String email) {
         String trimmedKeyword = validateKeyword(keyword);
         Pet pet = findPetIfProvided(petId, email);
 
         List<Place> places = placeRepository.findPlacesWithKeyword(trimmedKeyword);
-        return toMapMarkerResponses(places, pet).stream()
+        List<PlaceMapMarkerResponse> markers = toMapMarkerResponses(places, pet).stream()
             .sorted(Comparator.comparing(PlaceMapMarkerResponse::placeId))
             .toList();
+        return PlaceMapSearchResponse.from(markers);
     }
 
     public PageResponse<PlaceMarkerResponse> searchKeywordList(
