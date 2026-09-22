@@ -14,9 +14,12 @@ public class PlaceMarkerResponse {
     private boolean isFavorite;
     private String markerColor;
     private double averageRating;
+    private String placeType;
 
     @Builder
-    public PlaceMarkerResponse(Long placeId, String title, String firstImage, Double mapX, Double mapY, long distance, boolean isFavorite, String markerColor, double averageRating) {
+    public PlaceMarkerResponse(Long placeId, String title, String firstImage, Double mapX, Double mapY,
+                               long distance, boolean isFavorite, String markerColor,
+                               double averageRating, String placeType) {
         this.placeId = placeId;
         this.title = title;
         this.firstImage = firstImage;
@@ -26,5 +29,6 @@ public class PlaceMarkerResponse {
         this.isFavorite = isFavorite;
         this.markerColor = markerColor;
         this.averageRating=averageRating;
+        this.placeType = placeType;
     }
 }

@@ -7,7 +7,6 @@ import com.tmd.backend.common.MarkerColor;
 import com.tmd.backend.domain.favorite.Favorite;
 import com.tmd.backend.domain.pet.Pet;
 import com.tmd.backend.domain.place.Place;
-import com.tmd.backend.domain.place.PlacePetPolicy;
 import com.tmd.backend.domain.user.User;
 import com.tmd.backend.exception.BaseException;
 import com.tmd.backend.repository.favorite.FavoriteRepository;
@@ -46,7 +45,6 @@ class FavoriteServiceTest {
         Pet pet = mock(Pet.class);
         Favorite favorite = mock(Favorite.class);
         Place place = mock(Place.class);
-        PlacePetPolicy policy = mock(PlacePetPolicy.class);
         PageRequest pageable = PageRequest.of(0, 10);
 
         given(user.getId()).willReturn(1L);
@@ -58,8 +56,7 @@ class FavoriteServiceTest {
         given(place.getFirstImage()).willReturn("https://example.com/place.jpg");
         given(place.getTitle()).willReturn("반려견 공원");
         given(place.getAddr1()).willReturn("서울시");
-        given(place.getPlacePetPolicy()).willReturn(policy);
-        given(markerColorService.calculateMarkerColor(policy, pet)).willReturn(MarkerColor.GREEN);
+        given(markerColorService.calculateMarkerColorForPlace(place, pet)).willReturn(MarkerColor.GREEN);
         given(favoriteRepository.findAllByUserId(
             org.mockito.ArgumentMatchers.eq(1L), org.mockito.ArgumentMatchers.any(PageRequest.class)))
             .willReturn(new PageImpl<>(List.of(favorite), pageable, 1));

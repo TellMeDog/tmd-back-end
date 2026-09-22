@@ -65,7 +65,7 @@ class PlaceServiceTest {
         )).willReturn(candidates);
         given(reviewService.getAverageRatings(LongStream.rangeClosed(1, 10).boxed().toList()))
             .willReturn(Map.of());
-        given(markerColorService.calculateMarkerColor(null, null)).willReturn(MarkerColor.GREY);
+        given(markerColorService.calculateMarkerColorForPlace(any(Place.class), isNull())).willReturn(MarkerColor.GREY);
 
         List<PlaceMarkerResponse> result = placeService.init(null, null, 127.0, 37.0);
 
@@ -91,7 +91,7 @@ class PlaceServiceTest {
             anyDouble(), anyDouble(), anyDouble(), anyDouble()
         )).willReturn(List.of(place));
         given(reviewService.getAverageRatings(List.of(1L))).willReturn(Map.of(1L, 4.5));
-        given(markerColorService.calculateMarkerColor(null, pet)).willReturn(MarkerColor.GREEN);
+        given(markerColorService.calculateMarkerColorForPlace(any(Place.class), eq(pet))).willReturn(MarkerColor.GREEN);
         given(favoriteService.getFavoritePlaceIds("test@email.com", List.of(1L)))
             .willReturn(Set.of(1L));
 
@@ -125,7 +125,7 @@ class PlaceServiceTest {
             .mapToObj(id -> place(id, 127.0, 37.0))
             .toList();
         given(placeRepository.findPlacesWithKeyword("공원")).willReturn(places);
-        given(markerColorService.calculateMarkerColor(null, null)).willReturn(MarkerColor.GREY);
+        given(markerColorService.calculateMarkerColorForPlace(any(Place.class), isNull())).willReturn(MarkerColor.GREY);
 
         List<PlaceMapMarkerResponse> result = placeService.searchByKeyword("공원", null, null);
 
@@ -190,7 +190,7 @@ class PlaceServiceTest {
         given(place.getMapX()).willReturn(127.0);
         given(place.getMapY()).willReturn(37.0);
         given(placeRepository.findPlacesWithKeyword("강남")).willReturn(List.of(place));
-        given(markerColorService.calculateMarkerColor(null, null)).willReturn(MarkerColor.GREY);
+        given(markerColorService.calculateMarkerColorForPlace(any(Place.class), isNull())).willReturn(MarkerColor.GREY);
 
         List<PlaceMapMarkerResponse> result = placeService.searchByKeyword("강남", null, "test@email.com");
 
@@ -220,7 +220,7 @@ class PlaceServiceTest {
         given(placeRepository.findPlacePageWithKeyword("공원", 127.0, 37.0, pageable))
             .willReturn(new PageImpl<>(List.of(first, second), pageable, 1_000));
         given(reviewService.getAverageRatings(List.of(1L, 2L))).willReturn(Map.of(1L, 4.5));
-        given(markerColorService.calculateMarkerColor(null, null)).willReturn(MarkerColor.GREY);
+        given(markerColorService.calculateMarkerColorForPlace(any(Place.class), isNull())).willReturn(MarkerColor.GREY);
 
         PageResponse<PlaceMarkerResponse> result = placeService.searchKeywordList(
             "공원", null, null, 127.0, 37.0, 0, 2
@@ -260,7 +260,7 @@ class PlaceServiceTest {
         given(place.getMapX()).willReturn(127.0);
         given(place.getMapY()).willReturn(37.0);
         given(placeRepository.findById(1L)).willReturn(Optional.of(place));
-        given(markerColorService.calculateMarkerColor(null, null)).willReturn(MarkerColor.GREY);
+        given(markerColorService.calculateMarkerColorForPlace(any(Place.class), isNull())).willReturn(MarkerColor.GREY);
         given(reviewService.getAverageRating(1L)).willReturn(4.0);
         given(reviewService.getPlaceReviewList(1L, null, 0, 10, "latest"))
             .willReturn(new PageResponse<>(List.of(), 0, 10, 0, 0, false));

@@ -20,6 +20,27 @@ class PlaceRepositoryBoundsTest {
     @Autowired PlaceRepository placeRepository;
 
     @Test
+    void tourSynchronizationQueriesExcludeAnimalHospitals() {
+        Place tourPlace = em.persist(place("tour", 127.0, 37.0));
+        Place hospital = em.persist(Place.createAnimalHospital(
+            "MOIS-HOSPITAL:1", "06570", "서울특별시 서초구", "동물병원",
+            127.0, 37.0, "2026-09-18", "02-123-4567", "영업/정상",
+            "11", "650", "TMDHOSP"
+        ));
+        em.flush();
+        em.clear();
+
+        assertThat(placeRepository.findAllForSync())
+            .extracting(Place::getContentId)
+            .containsExactly(tourPlace.getContentId());
+        assertThat(placeRepository.findAllAnimalHospitalsForSync())
+            .extracting(Place::getContentId)
+            .containsExactly(hospital.getContentId());
+        assertThat(placeRepository.findPendingPetInfoSyncIds())
+            .containsExactly(tourPlace.getId());
+    }
+
+    @Test
     void bbox_안의_활성_장소만_조회한다() {
         Place inside = em.persist(place("inside", 127.5, 37.5));
         em.persist(place("outside-longitude", 128.5, 37.5));

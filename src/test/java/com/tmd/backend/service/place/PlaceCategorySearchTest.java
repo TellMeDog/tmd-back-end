@@ -58,7 +58,7 @@ class PlaceCategorySearchTest {
         given(placeRepository.findPlacesWithCategory(
             37.0, 127.0, 38.0, 128.0, 2, "FD05"
         )).willReturn(List.of(farPlace, nearPlace));
-        given(markerColorService.calculateMarkerColor(null, pet)).willReturn(MarkerColor.GREY);
+        given(markerColorService.calculateMarkerColorForPlace(any(Place.class), eq(pet))).willReturn(MarkerColor.GREY);
 
         List<PlaceMapMarkerResponse> result = placeService.searchByCategory(
             "FD05", "test@email.com", 1L,
@@ -75,7 +75,7 @@ class PlaceCategorySearchTest {
         Place nearPlace = place(1L, 127.01, 37.01);
         given(placeRepository.findPlacesWithinBounds(37.0, 127.0, 38.0, 128.0))
             .willReturn(List.of(farPlace, nearPlace));
-        given(markerColorService.calculateMarkerColor(null, null)).willReturn(MarkerColor.GREY);
+        given(markerColorService.calculateMarkerColorForPlace(any(Place.class), isNull())).willReturn(MarkerColor.GREY);
 
         List<PlaceMapMarkerResponse> result = placeService.searchByCategory(
             null, null, null,
@@ -99,7 +99,7 @@ class PlaceCategorySearchTest {
         given(placeRepository.findPlacesWithCategory(
             37.0, 127.0, 38.0, 128.0, 1, "FD"
         )).willReturn(List.of(place));
-        given(markerColorService.calculateMarkerColor(null, null)).willReturn(MarkerColor.GREY);
+        given(markerColorService.calculateMarkerColorForPlace(any(Place.class), isNull())).willReturn(MarkerColor.GREY);
 
         List<PlaceMapMarkerResponse> result = placeService.searchByCategory(
             "FD", null, null,
@@ -126,7 +126,7 @@ class PlaceCategorySearchTest {
         given(reviewService.getAverageRatings(List.of(1L, 2L))).willReturn(Map.of(1L, 4.5));
         given(favoriteService.getFavoritePlaceIds("test@email.com", List.of(1L, 2L)))
             .willReturn(Set.of(2L));
-        given(markerColorService.calculateMarkerColor(null, null)).willReturn(MarkerColor.GREY);
+        given(markerColorService.calculateMarkerColorForPlace(any(Place.class), isNull())).willReturn(MarkerColor.GREY);
 
         PageResponse<PlaceMarkerResponse> result = placeService.searchCategoryList(
             "FD05", "test@email.com", null,

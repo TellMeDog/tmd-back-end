@@ -237,6 +237,9 @@ public class PlaceService {
             .addr2(place.getAddr2())
             .firstImage2(place.getFirstImage2())
             .modifiedTime(place.getModifiedTime())
+            .placeType(placeType(place))
+            .tel(place.getTel())
+            .businessStatus(place.getBusinessStatus())
             .petPolicyInfo(petPolicyInfo)
             .visitStats(visitStats)
             .myReviews(StringUtils.hasText(email)
@@ -278,7 +281,7 @@ public class PlaceService {
         double averageRating,
         boolean isFavorite
     ) {
-        MarkerColor color = markerColorService.calculateMarkerColor(place.getPlacePetPolicy(), pet);
+        MarkerColor color = markerColorService.calculateMarkerColorForPlace(place, pet);
         long distance = calculateDistance(currMapY, currMapX, place.getMapY(), place.getMapX());
         return PlaceMarkerResponse.builder()
             .placeId(place.getId())
@@ -290,6 +293,7 @@ public class PlaceService {
             .isFavorite(isFavorite) // TODO: 즐겨찾기 로직 후 변경
             .markerColor(color.name())
             .averageRating(averageRating)
+            .placeType(placeType(place))
             .build();
     }
 
@@ -299,7 +303,8 @@ public class PlaceService {
                 place.getId(),
                 place.getMapX(),
                 place.getMapY(),
-                markerColorService.calculateMarkerColor(place.getPlacePetPolicy(), pet).name()
+                markerColorService.calculateMarkerColorForPlace(place, pet).name(),
+                placeType(place)
             ))
             .toList();
     }
@@ -322,6 +327,10 @@ public class PlaceService {
             places.getTotalPages(),
             places.hasNext()
         );
+    }
+
+    private String placeType(Place place) {
+        return place.isAnimalHospital() ? "ANIMAL_HOSPITAL" : "TOUR";
     }
 
     private TourCategory findCategoryIfProvided(String categoryCode) {

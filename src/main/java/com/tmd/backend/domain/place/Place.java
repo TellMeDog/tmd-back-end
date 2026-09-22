@@ -14,6 +14,7 @@ import java.util.List;
 
 @Entity
 @Table(indexes = {
+    @Index(name = "idx_place_source_active", columnList = "source, active"),
     @Index(name = "idx_place_active_lcls1", columnList = "active, lcls_systm1"),
     @Index(name = "idx_place_active_lcls2", columnList = "active, lcls_systm2"),
     @Index(name = "idx_place_active_lcls3", columnList = "active, lcls_systm3")
@@ -29,6 +30,10 @@ public class Place {
     @Column(unique = true, nullable = false)
     private String contentId;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 32, columnDefinition = "varchar(32) default 'TOUR_API'")
+    private PlaceSource source = PlaceSource.TOUR_API;
+
     private String zipCode;
     private String addr1;
     private String addr2;
@@ -38,6 +43,8 @@ public class Place {
     private String firstImage;
     private String firstImage2;
     private String modifiedTime;
+    private String tel;
+    private String businessStatus;
     private String petInfoSyncedModifiedTime;
 
     @Column(nullable = false, columnDefinition = "bit default 1")
@@ -113,6 +120,71 @@ public class Place {
             .build();
     }
 
+    public static Place createAnimalHospital(
+        String contentId,
+        String zipCode,
+        String address,
+        String title,
+        Double longitude,
+        Double latitude,
+        String modifiedTime,
+        String tel,
+        String businessStatus,
+        String regionCode,
+        String districtCode,
+        String categoryCode
+    ) {
+        Place place = Place.builder()
+            .contentId(contentId)
+            .zipCode(zipCode)
+            .addr1(address)
+            .title(title)
+            .mapX(longitude)
+            .mapY(latitude)
+            .modifiedTime(modifiedTime)
+            .lDongRegnCd(regionCode)
+            .lDongSignguCd(districtCode)
+            .lclsSystm1(categoryCode)
+            .build();
+        place.source = PlaceSource.ANIMAL_HOSPITAL;
+        place.tel = tel;
+        place.businessStatus = businessStatus;
+        return place;
+    }
+
+    public void updateFromAnimalHospital(
+        String zipCode,
+        String address,
+        String title,
+        Double longitude,
+        Double latitude,
+        String modifiedTime,
+        String tel,
+        String businessStatus,
+        String regionCode,
+        String districtCode,
+        String categoryCode
+    ) {
+        this.source = PlaceSource.ANIMAL_HOSPITAL;
+        this.zipCode = zipCode;
+        this.addr1 = address;
+        this.addr2 = null;
+        this.title = title;
+        this.mapX = longitude;
+        this.mapY = latitude;
+        this.firstImage = null;
+        this.firstImage2 = null;
+        this.modifiedTime = modifiedTime;
+        this.tel = tel;
+        this.businessStatus = businessStatus;
+        this.lDongRegnCd = regionCode;
+        this.lDongSignguCd = districtCode;
+        this.lclsSystm1 = categoryCode;
+        this.lclsSystm2 = null;
+        this.lclsSystm3 = null;
+        this.active = true;
+    }
+
     public boolean needsPetInfoSync(String sourceModifiedTime) {
         return petInfoSyncedModifiedTime == null
             || !petInfoSyncedModifiedTime.equals(syncVersion(sourceModifiedTime));
@@ -158,6 +230,14 @@ public class Place {
 
     public boolean isActive() {
         return active == null || active;
+    }
+
+    public boolean isAnimalHospital() {
+        return source == PlaceSource.ANIMAL_HOSPITAL;
+    }
+
+    public PlaceSource getSource() {
+        return source == null ? PlaceSource.TOUR_API : source;
     }
 
     private static String syncVersion(String sourceModifiedTime) {

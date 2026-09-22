@@ -18,6 +18,9 @@ public class PlaceDetailResponse {
     private String addr2;
     private String firstImage2;
     private String modifiedTime; // 최근 수정일
+    private String placeType;
+    private String tel;
+    private String businessStatus;
     private PetPolicyInfo petPolicyInfo;
     private VisitStats visitStats;
     private List<ReviewDetailResponse> myReviews;

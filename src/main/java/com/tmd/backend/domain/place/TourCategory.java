@@ -2,6 +2,8 @@ package com.tmd.backend.domain.place;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
@@ -26,6 +28,10 @@ public class TourCategory {
 
     @Column(nullable = false, length = 100)
     private String name;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20, columnDefinition = "varchar(20) default 'TOUR_API'")
+    private CategorySource source = CategorySource.TOUR_API;
 
     @Column(nullable = false)
     private int depth;
@@ -53,6 +59,13 @@ public class TourCategory {
         return new TourCategory(code, name, depth, parentCode, displayOrder, syncedAt);
     }
 
+    public static TourCategory createSystem(String code, String name, int displayOrder,
+                                            LocalDateTime syncedAt) {
+        TourCategory category = new TourCategory(code, name, 1, null, displayOrder, syncedAt);
+        category.source = CategorySource.SYSTEM;
+        return category;
+    }
+
     public void update(String name, int depth, String parentCode, int displayOrder,
                        LocalDateTime syncedAt) {
         this.name = name;
@@ -66,5 +79,9 @@ public class TourCategory {
     public void deactivate(LocalDateTime syncedAt) {
         this.active = false;
         this.syncedAt = syncedAt;
+    }
+
+    public boolean isTourApiManaged() {
+        return source == null || source == CategorySource.TOUR_API;
     }
 }

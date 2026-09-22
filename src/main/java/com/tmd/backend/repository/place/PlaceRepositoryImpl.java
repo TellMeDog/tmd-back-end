@@ -5,6 +5,7 @@ import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.tmd.backend.domain.place.Place;
+import com.tmd.backend.domain.place.PlaceSource;
 import com.tmd.backend.domain.place.QPlace;
 import com.tmd.backend.domain.place.QPlacePetInfo;
 import com.tmd.backend.domain.place.QPlacePetPolicy;
@@ -120,7 +121,7 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom{
         return jpaQueryFactory
             .selectFrom(place)
             .leftJoin(placePetInfo).on(placePetInfo.place.eq(place))
-            .where(activePlace(), placePetInfo.id.isNull())
+            .where(activePlace(), tourApiPlace(), placePetInfo.id.isNull())
             .orderBy(place.id.asc())
             .limit(limit)
             .fetch();
@@ -134,6 +135,10 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom{
 
     private BooleanExpression activePlace() {
         return place.active.isTrue().or(place.active.isNull());
+    }
+
+    private BooleanExpression tourApiPlace() {
+        return place.source.eq(PlaceSource.TOUR_API).or(place.source.isNull());
     }
 
     private BooleanExpression lDongSignguCdEq(String lDongSignguCd){

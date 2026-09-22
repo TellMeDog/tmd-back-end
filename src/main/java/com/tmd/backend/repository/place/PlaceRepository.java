@@ -14,10 +14,14 @@ public interface PlaceRepository extends JpaRepository<Place, Long>, PlaceReposi
     List<Place> findTop100ByIdGreaterThanOrderByIdAsc(Long lastId);
 
     @EntityGraph(attributePaths = {"placePetInfo", "placePetPolicy"})
-    @Query("SELECT p FROM Place p")
+    @Query("SELECT p FROM Place p WHERE p.source = com.tmd.backend.domain.place.PlaceSource.TOUR_API OR p.source IS NULL")
     List<Place> findAllForSync();
 
-    @Query("SELECT p.id FROM Place p WHERE (p.active = true OR p.active IS NULL) " +
+    @Query("SELECT p FROM Place p WHERE p.source = com.tmd.backend.domain.place.PlaceSource.ANIMAL_HOSPITAL")
+    List<Place> findAllAnimalHospitalsForSync();
+
+    @Query("SELECT p.id FROM Place p WHERE (p.source = com.tmd.backend.domain.place.PlaceSource.TOUR_API OR p.source IS NULL) " +
+        "AND (p.active = true OR p.active IS NULL) " +
         "AND (p.petInfoSyncedModifiedTime IS NULL OR p.petInfoSyncedModifiedTime <> p.modifiedTime) ORDER BY p.id")
     List<Long> findPendingPetInfoSyncIds();
 

@@ -277,7 +277,7 @@ public class ReviewService {
     }
 
     private MyReviewListResponse toMyReviewListResponse(Review review, Pet pet) {
-        MarkerColor color = markerColorService.calculateMarkerColor(review.getPlace().getPlacePetPolicy(), pet);
+        MarkerColor color = markerColorService.calculateMarkerColorForPlace(review.getPlace(), pet);
         return MyReviewListResponse.builder()
             .reviewId(review.getId())
             .placeId(review.getPlace().getId())

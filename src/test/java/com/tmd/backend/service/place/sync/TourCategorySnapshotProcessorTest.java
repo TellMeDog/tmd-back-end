@@ -39,6 +39,18 @@ class TourCategorySnapshotProcessorTest {
     }
 
     @Test
+    void doesNotDeactivateSystemCategoryMissingFromTourSnapshot() {
+        TourCategory system = TourCategory.createSystem(
+            "TMDHOSP", "동물병원", 999, LocalDateTime.now()
+        );
+        when(repository.findAll()).thenReturn(List.of(system));
+
+        processor.apply(List.of(new TourApiCategoryEntry("FD", "음식", 1, null, 1)));
+
+        assertThat(system.isActive()).isTrue();
+    }
+
+    @Test
     void invalidSnapshotDoesNotReadOrChangeDatabase() {
         List<TourApiCategoryEntry> entries = List.of(
             new TourApiCategoryEntry("FD05", "카페", 2, "FD", 1)

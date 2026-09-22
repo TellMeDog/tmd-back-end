@@ -67,6 +67,19 @@ tourapi:
     zone: ${TOUR_API_CATEGORY_SYNC_ZONE:Asia/Seoul}
     run-once: ${TOUR_API_CATEGORY_SYNC_RUN_ONCE:false}
 
+animal-hospital:
+  api:
+    endpoint: ${ANIMAL_HOSPITAL_API_ENDPOINT:https://apis.data.go.kr/1741000/animal_hospitals/info}
+    service-key: ${TOUR_API_SERVICE_KEY}
+    connect-timeout: ${ANIMAL_HOSPITAL_API_CONNECT_TIMEOUT:10s}
+    read-timeout: ${ANIMAL_HOSPITAL_API_READ_TIMEOUT:30s}
+    retry-delay: ${ANIMAL_HOSPITAL_API_RETRY_DELAY:500ms}
+  sync:
+    enabled: ${ANIMAL_HOSPITAL_SYNC_ENABLED:false}
+    cron: ${ANIMAL_HOSPITAL_SYNC_CRON:0 30 5 * * *}
+    zone: ${ANIMAL_HOSPITAL_SYNC_ZONE:Asia/Seoul}
+    run-once: ${ANIMAL_HOSPITAL_SYNC_RUN_ONCE:false}
+
 seed:
   manual:
     enabled: ${SEED_MANUAL_ENABLED:false}

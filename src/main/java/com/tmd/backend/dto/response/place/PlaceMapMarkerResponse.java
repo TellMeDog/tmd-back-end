@@ -4,6 +4,7 @@ public record PlaceMapMarkerResponse(
     Long placeId,
     Double mapX,
     Double mapY,
-    String markerColor
+    String markerColor,
+    String placeType
 ) {
 }

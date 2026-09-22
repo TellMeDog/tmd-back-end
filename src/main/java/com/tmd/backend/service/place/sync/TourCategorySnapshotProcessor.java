@@ -48,7 +48,9 @@ public class TourCategorySnapshotProcessor {
 
         int deactivated = 0;
         for (TourCategory category : existing.values()) {
-            if (!receivedCodes.contains(category.getCode()) && category.isActive()) {
+            if (category.isTourApiManaged()
+                && !receivedCodes.contains(category.getCode())
+                && category.isActive()) {
                 category.deactivate(syncedAt);
                 deactivated++;
             }

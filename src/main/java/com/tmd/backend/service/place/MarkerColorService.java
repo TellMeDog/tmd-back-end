@@ -5,6 +5,7 @@ import com.tmd.backend.ai.WeightLimitType;
 import com.tmd.backend.common.MarkerColor;
 import com.tmd.backend.domain.pet.Pet;
 import com.tmd.backend.domain.pet.PetBreed;
+import com.tmd.backend.domain.place.Place;
 import com.tmd.backend.domain.place.PlacePetPolicy;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +26,16 @@ public class MarkerColorService {
         PetBreed.TIBETAN_MASTIFF,
         PetBreed.WOLF_DOG
     );
+
+    public MarkerColor calculateMarkerColorForPlace(Place place, Pet pet) {
+        if (pet == null) {
+            return MarkerColor.GREY;
+        }
+        if (place.isAnimalHospital()) {
+            return MarkerColor.GREEN;
+        }
+        return calculateMarkerColor(place.getPlacePetPolicy(), pet);
+    }
 
     public MarkerColor calculateMarkerColor(PlacePetPolicy policy, Pet pet) {
         if (pet == null) {

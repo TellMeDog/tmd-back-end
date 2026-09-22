@@ -5,6 +5,7 @@ import com.tmd.backend.ai.WeightLimitType;
 import com.tmd.backend.common.MarkerColor;
 import com.tmd.backend.domain.pet.Pet;
 import com.tmd.backend.domain.pet.PetBreed;
+import com.tmd.backend.domain.place.Place;
 import com.tmd.backend.domain.place.PlacePetPolicy;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,18 @@ import static org.mockito.Mockito.when;
 class MarkerColorServiceTest {
 
     private final MarkerColorService service = new MarkerColorService();
+
+    @Test
+    void animalHospitalIsGreenForSelectedPetAndGreyWithoutPet() {
+        Place hospital = Place.createAnimalHospital(
+            "MOIS-HOSPITAL:1", null, "서울특별시", "동물병원",
+            127.0, 37.0, null, null, "영업/정상", "11", "650", "TMDHOSP"
+        );
+        Pet pet = pet(PetBreed.MALTESE, 5.0, true, true, true);
+
+        assertThat(service.calculateMarkerColorForPlace(hospital, pet)).isEqualTo(MarkerColor.GREEN);
+        assertThat(service.calculateMarkerColorForPlace(hospital, null)).isEqualTo(MarkerColor.GREY);
+    }
 
     @Test
     void 반려동물이_없으면_정책과_무관하게_GREY다() {
