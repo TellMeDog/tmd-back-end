@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @Tag(name = "Pet", description = "반려동물 API")
+@Slf4j
 @RestController
 @RequestMapping("/pets")
 @RequiredArgsConstructor
@@ -44,6 +46,7 @@ public class PetController {
         @RequestBody List<@Valid PetRegisterRequest> requests,
         @AuthenticationPrincipal String email
     ) {
+        log.info("반려견 정보 등록 email : {}", email);
         return ResponseEntity.ok(SuccessResponseDto.success(
             "반려견 정보를 등록했습니다.", petService.registerPets(email, requests)));
     }
@@ -58,6 +61,7 @@ public class PetController {
         @Valid @RequestBody PetUpdateRequest request,
         @AuthenticationPrincipal String email
     ) {
+        log.info("반려견 정보 수정 email : {}", email);
         return ResponseEntity.ok(SuccessResponseDto.success(
             "반려견 정보를 수정했습니다.", petService.updatePet(email, petId, request)));
     }
@@ -71,6 +75,7 @@ public class PetController {
         @Parameter(description = "반려견 ID", example = "1") @PathVariable Long petId,
         @AuthenticationPrincipal String email
     ) {
+        log.info("반려견 정보 삭제 email : {}", email);
         petService.deletePet(email, petId);
         return ResponseEntity.ok(SuccessResponseDto.successWithoutData("반려견 정보를 삭제했습니다."));
     }
